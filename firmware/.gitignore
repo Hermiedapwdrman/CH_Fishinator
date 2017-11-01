@@ -1,8 +1,0 @@
-/build
-/cmake-build-debug
-/cmake-build-release
-#components/arduino-esp32
-/.idea/.name
-.idea/.name
-.idea/workspace.xml
-
