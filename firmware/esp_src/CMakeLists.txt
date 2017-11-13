@@ -6,7 +6,7 @@ project(AAB_ESP_Template_subLUFA)
 #include sdk scripts
 # do note that this is only for the indexer and the esp-idf build system does resolve includes from these
 include(scripts_clion/esp_buildflags.cmake)
-#include(scripts_clion/esp_arduino_includes.cmake)
+include(scripts_clion/esp_arduino_includes.cmake)
 include(scripts_clion/esp_idf_includes.cmake)
 include(scripts_clion/esp_make_scripts.cmake)
 
@@ -17,7 +17,9 @@ include("/CH/development/lib_global_ext/lib_blynk_includes.cmake")
 
 #Set source files to your project for indexer.
 #Not component.mk as well as cmakelists must be included to have build succeed.
-#add_subdirectory(main)
+#add_subdirectory(main)  #Not Needed
+include_directories(components/HID_Joystick)
+include_directories(components/example_library)
 
 #Include source files in dumme exe to help with indexing.
 set(SOURCE_FILES
