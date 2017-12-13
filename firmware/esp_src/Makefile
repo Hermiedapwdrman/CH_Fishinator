@@ -19,5 +19,5 @@ PROJECT_NAME := app-template
 COMPONENT_EXTRA_INCLUDEDIRS := /CH/development/lib_global_ext/example_library/include	 # Works
 
 
-include /CH/development/sdk/esp-idf/make/project.mk
+include ./components/esp-idf/make/project.mk
 

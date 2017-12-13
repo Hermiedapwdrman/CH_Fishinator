@@ -14,6 +14,8 @@ include(scripts_clion/esp_make_scripts.cmake)
 # do note that this is only for the indexer and the esp-idf build system does resolve includes from these
 include("/CH/development/lib_global_ext/lib_blynk_includes.cmake")
 
+#If you are using arduino and a specific board then you might need to include its pin map ala:
+include_directories("${ESP_ARDUINO_PATH}/variants/feather_esp32")
 
 #Set source files to your project for indexer.
 #Not component.mk as well as cmakelists must be included to have build succeed.

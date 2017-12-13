@@ -45,3 +45,5 @@ to activate them in the **sdkconfig --> components** then it will build
 ### Notes regarding CLion editor and its behavior.
 1) All of the various targets should work with the indexer.  IF NOT, make sure the main/src director is marked as a 'project source'
 defined via the RMB menu.
+
+2) The esp-idf sdk and arduino ports are constantly changing, check the CMAKE includes periodically to make sure the folder structure and includes haven changed.
