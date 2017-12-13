@@ -1,8 +1,28 @@
-## Notes for cloning project template
+##Esp-IDF and Arduino firmware build notes:
 
-###### Note: Check the repo branches, there might be minor difference betweeen IDF and Arduino templates.
+#### Project organization:
 
-###### Note: There are now significant differences between esp-idf 2.1 and current master branch, must be explicit with which is being used.
+The esp-idf sdk is a comprehensive development framework distrubited in conjuction with Espressif's 
+ESP32 family of IOT SoC's. Arduino-esp32 is a separate project creating an abstraction layer for the esp-idf sdk 
+which implements the standard arduino libraries.  Used separately or together we should have lots of open source
+libraries available for our use.
+
+For our projects we want to make available both the idf and arduino components, while reducing the amount of copy pasting and
+frustration trying to keep the various sdk and libraries up to date.
+
+Basic esp firmware project structure is as follows:
+* ./main: Contains all the current project source, sub directories are possible and will be build by standard calls.
+* ./components: Contains any external libraries used in the project, these can be either cloned or included as submodules.
+* ./components/esp-idf: The main sdk used for development, a submodule pulled from the main repo: https://github.com/espressif/esp-idf
+* ./components/arduino-esp32: Arduino port from espressif, repo: https://github.com/espressif/arduino-esp32
+* ./scripts_clion: contains cmake files with preproccor defines, include paths and compiler flags, SOLELY for the benifit of the indexer.
+* ./cmake-build-xxxx: The directory the cmake build process builds, we are using make, not cmake, so this directory is not usefull.
+* ./build: Build directory populated by esp-idf make build system. Has all the compiled objects and binaries.
+
+
+#### Cloning project template for a new project
+
+###### Note: There are now significant differences between esp-idf 2.1 and current master branch, see ReadMe_Components.md for direction on freezing sdk versions.
 
 ###### Note: If you switch IDF branches, you must update all submodules with: *git submodule update --init --recursive*
 
@@ -20,29 +40,30 @@
     
 5) Note: app_main() is declared as a c function, if your main source is a .cpp file, make sure to prepend  **extern "C"** onto function definition.
 
-5) If you are not using arduino, you can delete symbolic link and comment out include directory in top level **CMakeLists.txt**
-
 
 ###### Reference docs: https://esp-idf.readthedocs.io/
 
   
-### Regarding Arduino-esp as a component:
-1) The IDF build system will find arduino-esp if it is sybolically linked:
-  *  _ln -s /CH/development/sdk/arduino-esp32_
+#### Regarding arduino-esp32 as a component:
+
+###### Note: Check the repo branches, there might be minor difference betweeen IDF and Arduino templates.
+
+1) If you are not using arduino, you can de-init the component submodule by using the command `git submodule deinit components/arduino-esp32` 
+  * To reinit use `git supmodule init components/arduino-esp32 && git supmodule update`  
+
 2) If you want to user setup() and loop() you must set it in the **sdkconfig**
   * __makemenu -> components --> start arduino on boot__
   
 3) If the libraries will not compile, IE BT and Wifi, you will need
-to activate them in the **sdkconfig --> components** then it will build
+to activate them in the **sdkconfig --> components** then it will build.
   
 4) In both cases, your main source fil needs to be a .cpp file, else the arduino sdk build will fail
     * If you are using app_main(), it needs to be preceeded by `extern "C"`
     
 4) Reference: https://github.com/espressif/arduino-esp32#using-as-esp-idf-component
   
-5) If you are not using arduino, you can delete symbolic link and comment out include directory in top level **CMakeLists.txt**
 
-### Notes regarding CLion editor and its behavior.
+#### Notes regarding CLion editor and its behavior.
 1) All of the various targets should work with the indexer.  IF NOT, make sure the main/src director is marked as a 'project source'
 defined via the RMB menu.
 

@@ -1,6 +1,7 @@
-##Notes for adding external libraries as components to IDF config.
+###Notes for adding external libraries as components to IDF config.
 1. There are two ways to include external libraries (either headers or src) into your project
-    * Make a symbolic link *ln -s* or copy the library to the components directory in the base project directory
+    * The preferred method of including external projects is to include them as git submodules
+    * Otherwise a symbolic link *ln -s* or copy the library to the components directory in the base project directory
     * Utilize either EXTRA_COMPONENT_DIRS to link to the location of the library directory with the components.mk file
 
 1. Any external library with src files included in the components directory or as a sub directory in main must include a **components.mk** file
@@ -19,6 +20,16 @@
     * COMPONENT_SRCDIRS :=  Additional src files needed for this component to compile, try not to use due to Brittleness
     
    ##### Refer to the build system documentation here: http://esp-idf.readthedocs.io/en/latest/api-guides/build-system.html
+
+### Configuring esp-idf or arduino-esp32 to a specific release, IE freeze SDK version.
+As both sdks are changing rapidly we might need to freeze the version to a specific realease or commit.
+1) You can do this buy navigating to the submodule and checking out a specific release
+* e.g. `cd /components/esp-idf && git checkout v2.0`
+2) When you commit the main project it will update to save the same module.
+
+Note this can be done in git kracken with the sub modules tab and selecting a particular commit
+
+
 
 TODO: Experiment with component specific build variables.
 TODO: How to include precompiled libraries and archives.
