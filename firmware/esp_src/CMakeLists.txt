@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.7)
 
 ##Define Project
-project(AAB_ESP_Template_ESP)
+project(AAA_Project_Template_ESP) #TODO: CHANGE THIS WITH NEW PROJECT
 
 #include sdk scripts
 # do note that this is only for the indexer and the esp-idf build system does resolve includes from these

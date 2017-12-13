@@ -1,0 +1,9 @@
+[submodule "firmware/esp_src/components/esp-idf"]
+	path = firmware/esp_src/components/esp-idf
+	url = https://github.com/espressif/esp-idf.git
+[submodule "firmware/esp_src/components/arduino-esp32"]
+	path = firmware/esp_src/components/arduino-esp32
+	url = https://github.com/espressif/arduino-esp32.git
+[submodule "firmware/esp_src/components/HID_Joystick"]
+	path = firmware/esp_src/components/HID_Joystick
+	url = /CH/development/lib_global/HID_Joystick
