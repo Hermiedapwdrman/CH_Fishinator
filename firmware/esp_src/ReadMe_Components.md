@@ -25,7 +25,7 @@
 As both sdks are changing rapidly we might need to freeze the version to a specific realease or commit.
 1) You can do this buy navigating to the submodule and checking out a specific release
 * e.g. `cd /components/esp-idf && git checkout v2.0`
-2) When you commit the main project it will update to save the same module.
+2) When you commit the main project it will update to save the same module, FREEZING the release!
 
 Note this can be done in git kracken with the sub modules tab and selecting a particular commit
 
