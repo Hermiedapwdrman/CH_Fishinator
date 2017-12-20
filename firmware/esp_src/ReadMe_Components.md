@@ -1,6 +1,12 @@
 ###Notes for adding external libraries as components to IDF config.
 1. There are two ways to include external libraries (either headers or src) into your project
     * The preferred method of including external projects is to include them as git submodules
+      * Add submodules `cd components && git submodule add /path_to_or_url`
+      * Update submodules `git submodule sync`
+      * Remove(hide/untrack), or add `git submodule deinit /path_to` or `git submodule init /path`
+      * Checkout and hold at a particular branch/tag: `git checkout branch/tag` **IN** submodule dir.
+      * Submodule docs: https://git-scm.com/book/en/v2/Git-Tools-Submodules
+       
     * Otherwise a symbolic link *ln -s* or copy the library to the components directory in the base project directory
     * Utilize either EXTRA_COMPONENT_DIRS to link to the location of the library directory with the components.mk file
 
