@@ -6,6 +6,7 @@
       * Update submodules `git submodule sync`
       * Remove(hide/untrack), or add `git submodule deinit /path_to` or `git submodule init /path`
       * Checkout and hold at a particular branch/tag: `git checkout branch/tag` **IN** submodule dir.
+      * If using submodules, after cloning you have to `git submodules init` `sync` and `update`
       * Submodule docs: https://git-scm.com/book/en/v2/Git-Tools-Submodules
        
     * Otherwise a symbolic link *ln -s* or copy the library to the components directory in the base project directory
