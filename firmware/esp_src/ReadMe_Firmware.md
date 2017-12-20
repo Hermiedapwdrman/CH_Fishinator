@@ -13,8 +13,8 @@ frustration trying to keep the various sdk and libraries up to date.
 Basic esp firmware project structure is as follows:
 * ./main: Contains all the current project source, sub directories are possible and will be build by standard calls.
 * ./components: Contains any external libraries used in the project, these can be either cloned or included as submodules.
-* ./components/esp-idf: The main sdk used for development, a submodule pulled from the main repo: https://github.com/espressif/esp-idf
-* ./components/arduino-esp32: Arduino port from espressif, repo: https://github.com/espressif/arduino-esp32
+* ./components/esp-idf: The main sdk used for development, a submodule pulled from **/CH/development/sdk/esp-idf**, local clone the main repo: https://github.com/espressif/esp-idf
+* ./components/arduino-esp32: Arduino port from espressif, a submodule pulled from **/CH/development/sdk/arduino-esp32** a local clone of main repo: https://github.com/espressif/arduino-esp32
 * ./scripts_clion: contains cmake files with preproccor defines, include paths and compiler flags, SOLELY for the benifit of the indexer.
 * ./cmake-build-xxxx: The directory the cmake build process builds, we are using make, not cmake, so this directory is not usefull.
 * ./build: Build directory populated by esp-idf make build system. Has all the compiled objects and binaries.
