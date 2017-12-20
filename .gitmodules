@@ -1,9 +1,9 @@
 [submodule "esp-idf"]
 	path = firmware/esp_src/components/esp-idf
-	url = /CH/development/libraries/sdk/esp-idf
+	url = /CH/development/sdk/esp-idf
 [submodule "arduino-esp32"]
 	path = firmware/esp_src/components/arduino-esp32
-	url = /CH/development/libraries/sdk/arduino-esp32
+	url = /CH/development/sdk/arduino-esp32
 [submodule "HID_Joystick"]
 	path = firmware/esp_src/components/HID_Joystick
-	url = /CH/development/lib_global/HID_Joystick
+	url = /CH/development/libraries/HID_Joystick

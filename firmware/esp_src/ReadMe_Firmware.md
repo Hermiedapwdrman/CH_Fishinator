@@ -33,6 +33,7 @@ Basic esp firmware project structure is as follows:
 3) Modify the **Makefile** project name, this will be the name of the compiled binaries
     * Note: Refer to [IDF Make docs](https://esp-idf.readthedocs.io/en/v1.0/build_system.html) for more complex options
     * Refer to component.mk file instructions for building in other libraries
+4) If using submodules you have to `git submodules init` `sync` and `update`
 3) In a terminal window call the `make menuconfig` from the **firmware** directory to open up the configuration GUI
     * This configuration is saved at **sdkconfig**
     * BT/BLE/WIFI, Arduino control and other 'sub modules/peripherials' are activated via the GUI
