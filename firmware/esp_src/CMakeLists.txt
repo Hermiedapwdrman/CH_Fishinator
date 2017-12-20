@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.7)
 
 ##Define Project
-project(CH_Fishinator) #TODO: CHANGE THIS WITH NEW PROJECT
+project(CH_Fishinator_ESP) #TODO: CHANGE THIS WITH NEW PROJECT
 
 #include sdk scripts
 # do note that this is only for the indexer and the esp-idf build system does resolve includes from these
