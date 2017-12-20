@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.7)
 
 ##Define Project
-project(AAA_Project_Template_ESP) #TODO: CHANGE THIS WITH NEW PROJECT
+project(CH_Fishinator) #TODO: CHANGE THIS WITH NEW PROJECT
 
 #include sdk scripts
 # do note that this is only for the indexer and the esp-idf build system does resolve includes from these
@@ -12,7 +12,7 @@ include(scripts_clion/esp_make_scripts.cmake)
 
 #include library scripts, if cmake lists are made for external libraries then you can include them here.
 # do note that this is only for the indexer and the esp-idf build system does resolve includes from these
-include("/CH/development/libraries/blynk-library/lib_blynk_includes.cmake")
+#include("components/blynk-library/lib_blynk_includes.cmake")
 
 #If you are using arduino and a specific board then you might need to include its pin map ala:
 include_directories("${ESP_ARDUINO_PATH}/variants/feather_esp32")

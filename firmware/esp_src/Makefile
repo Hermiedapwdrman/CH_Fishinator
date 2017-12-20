@@ -4,7 +4,7 @@
 #
 # Note: For the IDF build system, your project is seen as the *main* component, alongside all the other components.
 
-PROJECT_NAME := app-template
+PROJECT_NAME := CH_Fishinator_ESP
 
 #To include outside library eithe ruse EXTRA_COMPONENT_DIRS or symbolic link to components dirctory in project base dir.
 #EXTRA_COMPONENT_DIRS = /CH/development/lib_global_ext/example_library  #Absolute path works, if only headers then they must be in an /include sub-dir

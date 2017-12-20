@@ -30,23 +30,24 @@
 
 /** \file
  *
- *  Header file for USBtoSerial.c.
+ *  Header file for MassStorage.c.
  */
 
-#ifndef _USB_SERIAL_H_
-#define _USB_SERIAL_H_
+#ifndef _MASS_STORAGE_HOST_H_
+#define _MASS_STORAGE_HOST_H_
 
 	/* Includes: */
 		#include <avr/io.h>
 		#include <avr/wdt.h>
-		#include <avr/interrupt.h>
+		#include <avr/pgmspace.h>
 		#include <avr/power.h>
+		#include <avr/interrupt.h>
+		#include <ctype.h>
+		#include <stdio.h>
 
-		#include "Descriptors.h"
-
-		#include <LUFA/Drivers/Board/LEDs.h>
+		#include <LUFA/Drivers/Misc/TerminalCodes.h>
 		#include <LUFA/Drivers/Peripheral/Serial.h>
-		#include <LUFA/Drivers/Misc/RingBuffer.h>
+		#include <LUFA/Drivers/Board/LEDs.h>
 		#include <LUFA/Drivers/USB/USB.h>
 		#include <LUFA/Platform/Platform.h>
 
@@ -63,15 +64,19 @@
 		/** LED mask for the library LED driver, to indicate that an error has occurred in the USB interface. */
 		#define LEDMASK_USB_ERROR        (LEDS_LED1 | LEDS_LED3)
 
+		/** LED mask for the library LED driver, to indicate that the USB interface is busy. */
+		#define LEDMASK_USB_BUSY          LEDS_LED2
+
 	/* Function Prototypes: */
 		void SetupHardware(void);
+		void MassStorageHost_Task(void);
 
-		void EVENT_USB_Device_Connect(void);
-		void EVENT_USB_Device_Disconnect(void);
-		void EVENT_USB_Device_ConfigurationChanged(void);
-		void EVENT_USB_Device_ControlRequest(void);
-
-		void EVENT_CDC_Device_LineEncodingChanged(USB_ClassInfo_CDC_Device_t* const CDCInterfaceInfo);
+		void EVENT_USB_Host_HostError(const uint8_t ErrorCode);
+		void EVENT_USB_Host_DeviceAttached(void);
+		void EVENT_USB_Host_DeviceUnattached(void);
+		void EVENT_USB_Host_DeviceEnumerationFailed(const uint8_t ErrorCode,
+		                                            const uint8_t SubErrorCode);
+		void EVENT_USB_Host_DeviceEnumerationComplete(void);
 
 #endif
 
