@@ -1,6 +1,7 @@
 ###Notes for adding external libraries as components to IDF config.
 1. There are two ways to include external libraries (either headers or src) into your project
     * The preferred method of including external projects is to include them as git submodules
+      * NOTE: MOST submodules are added from a local repo (e.g. esp-idf in /CH/development/sdks)
       * Add submodules `cd components && git submodule add /path_to_or_url`
       * Update submodules `git submodule sync`
       * Remove(hide/untrack), or add `git submodule deinit /path_to` or `git submodule init /path`
