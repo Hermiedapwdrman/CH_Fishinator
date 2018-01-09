@@ -3,11 +3,13 @@
     * The preferred method of including external projects is to include them as git submodules
       * NOTE: MOST submodules are added from a local repo (e.g. esp-idf in /CH/development/sdks)
       * Add submodules `cd components && git submodule add /path_to_or_url`
-      * Update submodules `git submodule sync`
+      * Update submodules `git submodule sync` and update submodule branch by `git submodule update`
       * Remove(hide/untrack), or add `git submodule deinit /path_to` or `git submodule init /path`
       * Checkout and hold at a particular branch/tag: `git checkout branch/tag` **IN** submodule dir.
-      * If using submodules, after cloning you have to `git submodules init` `sync` and `update`
+      * If you switch branches you must commit the change in **base** directory and then run `git submodule sync && git submodule update --init --recursive`
+      * If using submodules, after cloning you have to `git submodules init` `sync` and `update --recursive`
       * Submodule docs: https://git-scm.com/book/en/v2/Git-Tools-Submodules
+    
        
     * Otherwise a symbolic link *ln -s* or copy the library to the components directory in the base project directory
     * Utilize either EXTRA_COMPONENT_DIRS to link to the location of the library directory with the components.mk file

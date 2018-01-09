@@ -18,7 +18,7 @@
 //#include <HardwareSerial.h>
 
 /**
- * IDF example main function.  No arduino libraries used, purelly esp-idf sdk libraries.
+ * IDF example main function.  Nyo arduino libraries used, purelly esp-idf sdk libraries.
  */
 
 
