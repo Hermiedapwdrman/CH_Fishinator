@@ -10,8 +10,9 @@
 
 
 #include <PID_v1.h>
-#include <TimerOne.h>
-
+//#include "PID_v1.h"
+//#include "../components/Arduino-PID-Library/PID_v1.h"
+//#include <TimerOne.h>
 
 
 class VPID : public PID

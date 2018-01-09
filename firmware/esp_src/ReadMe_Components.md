@@ -25,7 +25,8 @@
     
 3. See the makefile for examples of how to include libraries in your project. But include the following
     * EXTRA_COMPONENT_DIRS : = Abs path to external libraries containing headers and or src NOTE: if only headers than they must be in an /include dir.
-    * COMPONENT_ADD_INCLUDEDIRS := Relative include paths for headers to add to all components.
+    * COMPONENT_ADD_INCLUDEDIRS := Relative include paths for headers to add to all components. `EX: COMPONENT_ADD_INCLUDEDIRS := .` in a simple arduino library
+
     * COMPONENT_PRIV_INCLUDEDIRS := Visible to only this component.
     * COMPONENT_SRCDIRS :=  Additional src files needed for this component to compile, try not to use due to Brittleness
     

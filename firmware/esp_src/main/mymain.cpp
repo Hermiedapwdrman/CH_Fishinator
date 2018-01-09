@@ -92,6 +92,7 @@ IntervalTimer myTimer;
 void setup()
 {
 
+
 	initArduino();
 
 	// initialize the digital pin as an output.
