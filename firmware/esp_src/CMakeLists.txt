@@ -26,7 +26,7 @@ include_directories(components/Arduino-PID-Library)
 #Include source files in dumme exe to help with indexing.
 set(SOURCE_FILES
         main/sdkconfig_arduino.h.bak
-        main/myMain_or_ino.cpp
+        main/mymain.cpp
         )
 
 add_executable(zSrcList ${SOURCE_FILES})

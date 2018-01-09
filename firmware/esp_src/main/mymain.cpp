@@ -92,7 +92,9 @@ IntervalTimer myTimer;
 void setup()
 {
 
-	  // initialize the digital pin as an output.
+	initArduino();
+
+	// initialize the digital pin as an output.
 	  pinMode(led, OUTPUT);
 	  Serial.begin(115200);
 	delay(6000);
