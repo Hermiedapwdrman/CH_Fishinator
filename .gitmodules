@@ -7,3 +7,6 @@
 [submodule "HID_Joystick"]
 	path = firmware/esp_src/components/HID_Joystick
 	url = /CH/development/libraries/HID_Joystick
+[submodule "firmware/esp_src/components/Arduino-PID-Library"]
+	path = firmware/esp_src/components/Arduino-PID-Library
+	url = /CH/development/libraries/Arduino-PID-Library/

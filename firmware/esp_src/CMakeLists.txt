@@ -21,7 +21,7 @@ include_directories("${ESP_ARDUINO_PATH}/variants/feather_esp32")
 #Not component.mk as well as cmakelists must be included to have build succeed.
 #add_subdirectory(main)  #Not Needed
 include_directories(components/HID_Joystick)
-include_directories(components/example_library)
+include_directories(components/Arduino-PID-Library)
 
 #Include source files in dumme exe to help with indexing.
 set(SOURCE_FILES
