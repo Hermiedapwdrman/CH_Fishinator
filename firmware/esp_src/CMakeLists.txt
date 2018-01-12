@@ -27,6 +27,7 @@ include_directories(components/PIDwVelProfile)
 set(SOURCE_FILES
         main/sdkconfig_arduino.h.bak
         main/mymain.cpp
+#        main/myMain_or_ino.cpp
         )
 
 add_executable(zSrcList ${SOURCE_FILES})
