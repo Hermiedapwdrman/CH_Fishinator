@@ -5,8 +5,8 @@
  *      Author: patrick
  */
 
-#include <Arduino.h>
 #include "CHMotorDriver.h"
+#include <Arduino.h>
 
 
 CHMotorDriver::CHMotorDriver(unsigned char * cb, CHMotorChannel mchan, bool enableencoder,
@@ -116,7 +116,7 @@ bool CHMotorDriver::begin()
 void CHMotorDriver::Encoder_ISR()
 {
 	//unsigned int B = ((PINC & 0x08) >> 4); //NOTE: CHANCE
-	unsigned char B = digitalReadFast(encBpin);  //An effort to speed up digital read is below
+	unsigned char B = digitalRead(encBpin);  //An effort to speed up digital read is below
 	//B = ((PIND & 0b00001000) >> 3);
 
 	if (B == 1)  //Encoder is moving forward
@@ -475,17 +475,17 @@ int8_t CHMotorDriver::CHMD_initEEPROM()
 }
 
 
-bool CHMotorDriver::CHMD_writeEEPROM()
-{
-
-	char cc = 0;
-	if(position_current < 0) cc = -1;
-	else if (position_current >= 0 ) cc = 1;
-	else cc = 0;
-	EEPROM.update(((eepromaddress_msb << 8)+ eepromaddress_lsb), cc);
-	delay(3);
-	return 1;
-
-}
+//bool CHMotorDriver::CHMD_writeEEPROM()
+//{
+//
+//	char cc = 0;
+//	if(position_current < 0) cc = -1;
+//	else if (position_current >= 0 ) cc = 1;
+//	else cc = 0;
+//	EEPROM.update(((eepromaddress_msb << 8)+ eepromaddress_lsb), cc);
+//	delay(3);
+//	return 1;
+//
+//}
 
 

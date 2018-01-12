@@ -87,7 +87,7 @@ unsigned char controlbyte = 0;
 
 CHMotorDriver myReel(&controlbyte,channel2, 0, pwmper,300*pwmper);
 CHMotorDriver myRod(&controlbyte,channel1, 1, pwmper,300*pwmper);
-IntervalTimer myTimer;
+//IntervalTimer myTimer;
 
 void setup()
 {
@@ -123,7 +123,7 @@ void setup()
 	myReel.setMotorPWM(Brake,1023);
 
 
-    myTimer.begin(ISRwrapper, pwmper);
+//    myTimer.begin(ISRwrapper, pwmper);
     attachInterrupt(myRod.encApin,encISRwrapper, RISING);
 
 

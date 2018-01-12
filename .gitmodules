@@ -10,3 +10,6 @@
 [submodule "firmware/esp_src/components/Arduino-PID-Library"]
 	path = firmware/esp_src/components/Arduino-PID-Library
 	url = /CH/development/libraries/Arduino-PID-Library/
+[submodule "firmware/esp_src/components/PIDwVelProfile"]
+	path = firmware/esp_src/components/PIDwVelProfile
+	url = /CH/development/libraries/PIDwVelProfile/

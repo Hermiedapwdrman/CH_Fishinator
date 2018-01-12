@@ -14,7 +14,7 @@ PROJECT_NAME := CH_Fishinator_ESP
 #COMPONENT_SRCDIRS := can include relative path src directories.
 #COMPONENT_ADD_INCLUDEDIRS := /components/example_library/include	 # Works if symbolic link is used
 #COMPONENT_PRIV_INCLUDEDIRS := /CH/development/lib_global_ext/example_library/include	 # Will not work
-COMPONENT_ADD_INCLUDEDIRS := /components/Arduino-PID-Library	 # Works if symbolic link is used
+#COMPONENT_ADD_INCLUDEDIRS := /components/Arduino-PID-Library	 # Works if symbolic link is used
 
 
 #For adding headers with absolute paths, you must use the following commands with absolute paths.

@@ -9,7 +9,7 @@
 #define CHMOTORDRIVER_H_
 
 #include "VPID.h"
-#include <EEPROM.h>
+//#include <EEPROM.h>
 #include <SPI.h>
 
 enum CHdirection {
