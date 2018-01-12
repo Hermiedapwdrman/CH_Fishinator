@@ -85,14 +85,14 @@ bool CHMotorDriver::begin()
 	digitalWrite(M2_sleep, 1); //Enable
 
 	//Setup Pwm Registers
-	analogWriteResolution(10); //Set PWM 10 bit (0-1023) resolution
+//	analogWriteResolution(10); //Set PWM 10 bit (0-1023) resolution
 	unsigned int freq = 1000000/mypwmperiod;
 	Serial.println(freq);
 	//analogWriteFrequency(SOLp,freq);  //Set PWM frequency to timer interrupt period
-	analogWriteFrequency(M1Ap,freq);
-	analogWriteFrequency(M1Bp,freq);
-	analogWriteFrequency(M2Ap,freq);
-	analogWriteFrequency(M2Bp,freq);
+//	analogWriteFrequency(M1Ap,freq);
+//	analogWriteFrequency(M1Bp,freq);
+//	analogWriteFrequency(M2Ap,freq);
+//	analogWriteFrequency(M2Bp,freq);
 
 
 
@@ -255,25 +255,25 @@ bool CHMotorDriver::setMotorPWM(CHdirection dir, unsigned int pwmval)
 		bitClear(*pcontrolbyte, bA);
 		bitSet(*pcontrolbyte, bB);
 		digitalWrite(ppA, 0);
-		analogWrite(ppB, pwmval);
+//		analogWrite(ppB, pwmval);
 		break;
 	case Reverse:
 		bitSet(*pcontrolbyte, bA);
 		bitClear(*pcontrolbyte, bB);
 			digitalWrite(ppA, 1);
-		analogWrite(ppB, pwmval);
+//		analogWrite(ppB, pwmval);
 		break;
 	case Brake:
 		bitSet(*pcontrolbyte, bA);
 		bitSet(*pcontrolbyte, bB);
 			digitalWrite(ppA, 0);
-		analogWrite(ppB, 0);
+//		analogWrite(ppB, 0);
 		break;
 	case Neutral:
 		bitClear(*pcontrolbyte, bA);
 		bitClear(*pcontrolbyte, bB);
 			digitalWrite(ppA, 0);
-		analogWrite(ppB, 0);
+//		analogWrite(ppB, 0);
 		break;
 	default:
 		break;
@@ -426,53 +426,53 @@ void CHMotorDriver::CHMD_Timer_ISR()
  *
  *******************************************************************/
 
-//int CHMotorDriver::CHMD_initEEPROM(char upperbyte)
-int8_t CHMotorDriver::CHMD_initEEPROM()
-{
-	uint16_t ii = 0;
-	uint8_t cc = 0;
-	//First read the lsb from the address storage register
-	ii = (eepromaddress_msb << 8);
-	cc = EEPROM.read(ii);
-	delay(5);
-
-	Serial.print(F("storadd: "));
-	Serial.print(ii, HEX);
-	Serial.print(F(" lsb: "));
-	Serial.print(cc, HEX);
-
-	//Increment and rewrite the address storage register
-	if(cc == 0xFF) eepromaddress_lsb = 1;  //NOTE: CANNOT BE 0, thats the address storage byte!
-	else eepromaddress_lsb = cc+1;
-	EEPROM.write(ii,eepromaddress_lsb);
-	delay(5);
-
-	Serial.print(F(" storadd: "));
-	Serial.print(ii, HEX);
-	Serial.print(F(" newlsb: "));
-	Serial.print(eepromaddress_lsb, HEX);
-
-	//Read the encoder value register and return the value
-	ii = (eepromaddress_msb << 8) + cc;
-	cc = EEPROM.read(ii);
-	delay(5);
-
-	Serial.print(F(" encadd: "));
-	Serial.print(ii, HEX);
-	Serial.print(F(" cp: "));
-	Serial.print(cc);
-
-	//Finally write back the encoder value to the new storage address.
-	ii = (eepromaddress_msb << 8) + eepromaddress_lsb;
-	EEPROM.write(ii,cc);
-	delay(5);
-
-	Serial.print(F(" newencadd: "));
-	Serial.println(ii, HEX);
-
-	return cc;  //Return the address value
-
-}
+////int CHMotorDriver::CHMD_initEEPROM(char upperbyte)
+//int8_t CHMotorDriver::CHMD_initEEPROM()
+//{
+//	uint16_t ii = 0;
+//	uint8_t cc = 0;
+//	//First read the lsb from the address storage register
+//	ii = (eepromaddress_msb << 8);
+//	cc = EEPROM.read(ii);
+//	delay(5);
+//
+//	Serial.print(F("storadd: "));
+//	Serial.print(ii, HEX);
+//	Serial.print(F(" lsb: "));
+//	Serial.print(cc, HEX);
+//
+//	//Increment and rewrite the address storage register
+//	if(cc == 0xFF) eepromaddress_lsb = 1;  //NOTE: CANNOT BE 0, thats the address storage byte!
+//	else eepromaddress_lsb = cc+1;
+//	EEPROM.write(ii,eepromaddress_lsb);
+//	delay(5);
+//
+//	Serial.print(F(" storadd: "));
+//	Serial.print(ii, HEX);
+//	Serial.print(F(" newlsb: "));
+//	Serial.print(eepromaddress_lsb, HEX);
+//
+//	//Read the encoder value register and return the value
+//	ii = (eepromaddress_msb << 8) + cc;
+//	cc = EEPROM.read(ii);
+//	delay(5);
+//
+//	Serial.print(F(" encadd: "));
+//	Serial.print(ii, HEX);
+//	Serial.print(F(" cp: "));
+//	Serial.print(cc);
+//
+//	//Finally write back the encoder value to the new storage address.
+//	ii = (eepromaddress_msb << 8) + eepromaddress_lsb;
+//	EEPROM.write(ii,cc);
+//	delay(5);
+//
+//	Serial.print(F(" newencadd: "));
+//	Serial.println(ii, HEX);
+//
+//	return cc;  //Return the address value
+//
+//}
 
 
 //bool CHMotorDriver::CHMD_writeEEPROM()
