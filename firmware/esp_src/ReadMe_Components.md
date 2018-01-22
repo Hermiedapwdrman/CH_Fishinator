@@ -1,15 +1,15 @@
 ###Notes for adding external libraries as components to IDF config.
-1. There are two ways to include external libraries (either headers or src) into your project
-    * The preferred method of including external projects is to include them as git submodules
-      * NOTE: MOST submodules are added from a local repo (e.g. esp-idf in /CH/development/sdks)
-      * Add submodules `cd components && git submodule add /path_to_or_url`
-      * Update submodules `git submodule sync` and update submodule branch by `git submodule update`
-      * Remove(hide/untrack), or add `git submodule deinit /path_to` or `git submodule init /path`
-      * Checkout and hold at a particular branch/tag: `git checkout branch/tag` **IN** submodule dir.
-      * If you switch branches you must commit the change in **base** directory and then run `git submodule sync && git submodule update --init --recursive`
-      * If using submodules, after cloning you have to `git submodules init` `sync` and `update --recursive`
-      * Submodule docs: https://git-scm.com/book/en/v2/Git-Tools-Submodules
-    
+1. The primary way of adding external libraries, and sdks to the project is via git submodules
+  * NOTE: Most submodules are added from a local repo (e.g. esp-idf in /CH/development/sdks), so things like component.mk files can be added
+  * Add submodules `cd components && git submodule add /path_to_or_url`
+  * Checkout a particular branch/tag and so you: `git checkout branch/tag` **IN** submodule dir.
+    * You must then return **base** directory and `git commit -m "Updated submodule branch xxx' to save the setting.
+    * Then you can run `git submodule sync && git submodule update --init --recursive`  to download the directory
+  * To fast forward a submodule brangh you navigate to its directories `components/xxx` and `git fetch` and `git pull` **AND** commit the main project
+    You can then run the sync and update --recursive in the main dir to update.
+  * Remove(hide/untrack), or add `git submodule deinit /path_to` or `git submodule init /path`
+  * Submodule docs: https://git-scm.com/book/en/v2/Git-Tools-Submodules
+
        
     * Otherwise a symbolic link *ln -s* or copy the library to the components directory in the base project directory
     * Utilize either EXTRA_COMPONENT_DIRS to link to the location of the library directory with the components.mk file
