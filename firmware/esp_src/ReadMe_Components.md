@@ -5,7 +5,8 @@
   * Checkout a particular branch/tag and so you: `git checkout branch/tag` **IN** submodule dir.
     * You must then return **base** directory and `git commit -m "Updated submodule branch xxx' to save the setting.
     * Then you can run `git submodule sync && git submodule update --init --recursive`  to download the directory
-  * To fast forward a submodule brangh you navigate to its directories `components/xxx` and `git pull' in that directory, back to base directory and commit.
+  * To fast forward a submodule brangh you navigate to its directories `components/xxx` and `git fetch` and `git pull` **AND** commit the main project
+    You can then run the sync and update --recursive in the main dir to update.
   * Remove(hide/untrack), or add `git submodule deinit /path_to` or `git submodule init /path`
   * Submodule docs: https://git-scm.com/book/en/v2/Git-Tools-Submodules
 
