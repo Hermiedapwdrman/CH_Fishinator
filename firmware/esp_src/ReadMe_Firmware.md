@@ -24,7 +24,7 @@ Basic esp firmware project structure is as follows:
 
 ###### Note: There are now significant differences between esp-idf 2.1 and current master branch, see ReadMe_Components.md for direction on freezing sdk versions.
 
-###### Note: If you switch IDF branches, you must update all submodules with: *git submodule update --init --recursive*
+###### Note: If you switch IDF branches, you must update all submodules: See the component readme for instructions.
 
 1) *git clone* this template into a new project directory.
 2) Inside the **/firmware_ directory**, alter the **CMakeLists.txt** file:
@@ -34,6 +34,7 @@ Basic esp firmware project structure is as follows:
     * Note: Refer to [IDF Make docs](https://esp-idf.readthedocs.io/en/v1.0/build_system.html) for more complex options
     * Refer to component.mk file instructions for building in other libraries
 4) If using submodules you have to `git submodules init` `sync` and `update`
+5) Mark the main directory (the main source directory), and components (sdk and libraries) as project source via right click menu.
 3) In a terminal window call the `make menuconfig` from the **firmware** directory to open up the configuration GUI
     * This configuration is saved at **sdkconfig**
     * BT/BLE/WIFI, Arduino control and other 'sub modules/peripherials' are activated via the GUI
