@@ -24,7 +24,8 @@
 #include "RoboClaw.h"
 #include "AMT20_ABSQUADENC_SPI.h"
 
-void print_task(void *pvParameter);  //Print task for encoder value.
+void print_task(void *novars);  //Print task for encoder value.
+void control_comm_task(void* novars); //Monitor incoming com task
 
 
 /** Encoder Setup **/
@@ -38,6 +39,15 @@ HardwareSerial HWSerial(1);
 RoboClaw roboclaw(&HWSerial,10000);
 
 
+/**Fishing rod testing functions **/
+const int32_t rod_cast_begin_pos = 3450;
+const int32_t rod_cast_release_pos = 2600;
+const int32_t rod_cast_finish_pos = 1250;
+const int32_t rod_hook_pos = 2400;
+const int32_t rod_neutral_pos = 1760;
+void fishing_rod_cast_sequence();
+
+
 /**
  * IDF main function with used in conjuction with arduino libraries.
  */
@@ -48,7 +58,8 @@ extern "C" void app_main()
 
 
     printf("Testing GPIO interrupts for encoder counting.!\n");
-
+    //TESTING using easier to implement arduino serial.
+    Serial.begin(921600); //Use arduino serial class for ease.
 
     /** Trying arduino spi library **/
     SPI.begin();
@@ -78,22 +89,25 @@ extern "C" void app_main()
 
     //Create threads to handle program tasks.
 //    xTaskCreatePinnedToCore(&print_task, "print_task",configMINIMAL_STACK_SIZE,NULL,5,NULL,1);
-    xTaskCreate(&print_task,"Print_Task",8192,NULL,5,NULL);
+    xTaskCreate(&print_task,"Print_Task",4092,NULL,5,NULL);
+    xTaskCreate(&control_comm_task, "Comm task",4092,NULL, 10,NULL);
 //    xTaskCreate(&spi_AMT_encoder_task,"Encoder Task",8192,NULL,5,NULL);
 
 
 
 }
 
-void print_task(void *pvParameter){
+
+void print_task(void *novars) {
     bool RC_valid_flag = false;
     uint8_t RC_status = 0;
 
-    for(;;){
+
+    for (;;) {
 
 //        AMT20_abs_position = read_AMT20_position();
         AMT20_abs_position = Aencoder.readEncoderPosition();
-        int32_t roboclaw_position = roboclaw.ReadEncM1(address, &RC_status , &RC_valid_flag);
+        int32_t roboclaw_position = roboclaw.ReadEncM1(address, &RC_status, &RC_valid_flag);
 
         printf("Abs. Pos: %i \t\t", AMT20_abs_position);
         printf("Quad Pos: %i \t\t", esp_quadenc_position);
@@ -103,5 +117,86 @@ void print_task(void *pvParameter){
         vTaskDelay(500 / portTICK_PERIOD_MS);
     }
 }
+
+void control_comm_task(void* novars){
+
+    while(1) {
+        int inchar = 0;
+//        int sanitycheck = 0;
+
+        if (Serial.available()) {
+            inchar = Serial.read();
+            printf("You sent: %c\n", inchar);
+        }
+        vTaskDelay(30 / portTICK_PERIOD_MS);
+
+
+        switch (inchar) {
+            case 't':  //Re-calibrate encoders
+
+//                AMT20_abs_position = Aencoder.readEncoderPosition();
+//                vTaskDelay(2/portTICK_PERIOD_MS);
+//                AMT20_abs_position = Aencoder.readEncoderPosition();  //Why do we need to call twice?
+                esp_quadenc_position = AMT20_abs_position;
+                roboclaw.SetEncM1(address,AMT20_abs_position);
+                break;
+
+            case 'a': // Go to cast start
+
+
+
+                break;
+
+            case 'd': // Go to cast release location
+
+
+
+                break;
+
+            case 'p': // Cast, with second check of 'y'
+
+                //Check if rod is within 20 counts of cast start, then delay and cast.
+                if(abs(AMT20_abs_position - rod_cast_begin_pos) < 20){
+                    printf("Casting!\n\n");
+                }
+                else
+                {
+                    printf("Not in position, no cast! \n\n");
+                }
+
+//                Serial.setTimeout(2000);
+//                sanitycheck = Serial.parseInt();
+//                if(sanitycheck == 1) {
+//                    printf("Casting!\n\n");
+//                    //fishing_rod_cast_sequence();
+//                }
+
+                break;
+
+            case '=': //Fire solenoid for 1 second
+
+                break;
+
+            case 'u': //Reel for 30ms?
+
+                break;
+
+            case 'q': //Advanced cast release 5 counts
+
+                break;
+
+            case 'w': //Retard cast release 5 counts
+
+                break;
+            default:
+                break;
+
+        }
+    }
+
+
+}
+
+
 
 
