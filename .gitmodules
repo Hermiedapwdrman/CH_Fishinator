@@ -13,3 +13,9 @@
 [submodule "firmware/esp_src/components/PIDwVelProfile"]
 	path = firmware/esp_src/components/PIDwVelProfile
 	url = /CH/development/libraries/PIDwVelProfile/
+[submodule "firmware/esp_src/components/Roboclaw_Arduino"]
+	path = firmware/esp_src/components/Roboclaw_Arduino
+	url = /CH/development/libraries/Roboclaw_Arduino/
+[submodule "firmware/esp_src/components/AMT20_QuadAbs_Encoder"]
+	path = firmware/esp_src/components/AMT20_QuadAbs_Encoder
+	url = /CH/development/libraries/AMT20_QuadAbs_Encoder/
