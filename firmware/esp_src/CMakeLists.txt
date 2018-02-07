@@ -22,6 +22,9 @@ include_directories("${ESP_ARDUINO_PATH}/variants/feather_esp32")
 #add_subdirectory(main)  #Not Needed
 include_directories(components/HID_Joystick)
 include_directories(components/PIDwVelProfile)
+include_directories(components/Roboclaw_Arduino)
+include_directories(components/AMT20_QuadAbs_Encoder)
+
 
 #Include source files in dumme exe to help with indexing.
 set(SOURCE_FILES

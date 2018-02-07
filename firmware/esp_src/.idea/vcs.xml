@@ -2,7 +2,9 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="$PROJECT_DIR$/../.." vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/components/AMT20_QuadAbs_Encoder" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/components/HID_Joystick" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/components/PIDwVelProfile" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/components/Roboclaw_Arduino" vcs="Git" />
   </component>
 </project>
