@@ -31,8 +31,10 @@ void control_comm_task(void* novars); //Monitor incoming com task
 /** Encoder Setup **/
 AMT20_ABSQUADENC_SPI Aencoder(&SPI);
 volatile DRAM_ATTR int32_t esp_quadenc_position = 0;  //Encoder global counter for esp quadrature counting
-DRAM_ATTR int16_t AMT20_abs_position = -1;
-DRAM_ATTR int32_t roboclaw_position = 0;
+//DRAM_ATTR int16_t AMT20_abs_position = -1;
+//DRAM_ATTR int32_t roboclaw_position = 0;
+int16_t AMT20_abs_position = -1;
+int32_t roboclaw_position = 0;
 
 /** Roboclaw setup **/
 #define roboclaw_addr 0x80
@@ -120,22 +122,26 @@ extern "C" void app_main()
 
 
 void print_task(void *novars) {
-    bool RC_valid_flag = false;
-    uint8_t RC_status = 0;
+//    bool RC_valid_flag = false;
+//    uint8_t RC_status = 0;
 
 
     for (;;) {
-
+        bool RC_valid_flag = false;
+        uint8_t RC_status = 0;
 //        AMT20_abs_position = read_AMT20_position();
         AMT20_abs_position = Aencoder.readEncoderPosition();
+        ets_delay_us(30);
         roboclaw_position = roboclaw.ReadEncM1(roboclaw_addr, &RC_status, &RC_valid_flag);
 
         printf("Abs. Pos: %i \t\t", AMT20_abs_position);
         printf("Quad Pos: %i \t\t", esp_quadenc_position);
-        printf("Roboclaw Quad: %i \n", roboclaw_position);
+        printf("Roboclaw Quad: %i \t\t", roboclaw_position);
+        printf("RC Flag: %i  RC Status: %i \n", RC_valid_flag,RC_status);
+
 
 //        esp_task_wdt_reset();
-        vTaskDelay(3000 / portTICK_PERIOD_MS);
+        vTaskDelay(300 / portTICK_PERIOD_MS);
     }
 }
 
@@ -214,6 +220,7 @@ void control_comm_task(void* novars){
                 break;
 
             default:
+//                putchar('+');
                 roboclaw.DutyM2(roboclaw_addr, 0);
                 gpio_set_level(solenoid_gpio_pin,1);
                 break;
