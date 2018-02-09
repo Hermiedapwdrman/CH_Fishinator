@@ -52,6 +52,8 @@ const int32_t reel_pwm_drive = 0x4000;
 const int32_t rod_MAX_pos = 3400;
 const int32_t rod_MIN_pos = 850;
 
+volatile boolean casting_semaphore = false;
+
 typedef struct{
   int32_t pid_P;
   int32_t pid_I;
@@ -64,9 +66,9 @@ typedef struct{
   int32_t accel_decel;
 }rod_control_params_t;
 
-rod_control_params_t rod_slow_move_params ={2000, 2, 4000, 40, 20, rod_MIN_pos, rod_MAX_pos, 200, 400};
+rod_control_params_t rod_slow_move_params ={3000, 3, 6000, 40, 20, rod_MIN_pos, rod_MAX_pos, 300, 600};
 rod_control_params_t rod_CASTstart_move_params ={10000, 40, 80000, 1000, 20, rod_MIN_pos, rod_MAX_pos, 90000, 30000};
-rod_control_params_t rod_CASTfinish_move_params ={2000, 2, 4000, 100, 20, rod_MIN_pos, rod_MAX_pos, 3000, 10000};
+rod_control_params_t rod_CASTfinish_move_params ={8000, 10, 20000, 200, 20, rod_MIN_pos, rod_MAX_pos, 500, 6000};
 
 /**Fishing rod control functions, encoder manip functions **/
 void fishing_rod_cast_sequence();
@@ -214,22 +216,19 @@ void control_comm_task(void* novars){
                 break;
 
             case 'p': // Cast, with second check of 'y'
+                if(abs(AMT20_abs_position - rod_cast_begin_pos) <= 100) {
+                    do {
+                        inchar = getchar();
+                    } while (inchar == EOF);
 
-                //Check if rod is within 20 counts of cast start, then delay and cast.
-                if(abs(AMT20_abs_position - rod_cast_begin_pos) < 20){
-                    printf("Casting!\n\n");
+                    if (inchar == 'z') {
+                        printf("Casting!\n\n");
+                        fishing_rod_cast_sequence();
+                    } else {
+                        printf("Wrong sequence, no cast! \n\n");
+                    }
                 }
-                else
-                {
-                    printf("Not in position, no cast! \n\n");
-                }
-
-//                Serial.setTimeout(2000);
-//                sanitycheck = Serial.parseInt();
-//                if(sanitycheck == 1) {
-//                    printf("Casting!\n\n");
-//                    //fishing_rod_cast_sequence();
-//                }
+                else printf("Not in cast start position,  no cast! \n\n");
 
                 break;
 
@@ -292,8 +291,41 @@ void goto_rod_position(rod_control_params_t* params, int16_t destination, boolea
 }
 
 void fishing_rod_cast_sequence(){
+    //Some sort of enable flag and/or semaphore take?
 
+    sync_encoders();  //Sync encoders
+    vTaskDelay(20/portTICK_PERIOD_MS);  //Yield for encoder sync to finish
+    gpio_set_level(solenoid_gpio_pin,0); //Low Active.
 
+    goto_rod_position(&rod_CASTstart_move_params,rod_neutral_pos,1,1);  //Start Casting
+    vTaskDelay(250/portTICK_PERIOD_MS); //Yield for a while, while the motor gets going.
+
+    casting_semaphore = true;
+    while(casting_semaphore) {
+//        putchar('.');
+//        vTaskDelay(1 / portTICK_PERIOD_MS);  //Block(yield cpu) while waiting for solenoid release.
+        ets_delay_us(50);
+    }
+    //Enter critical section or
+    //Watch encoder value//attach interrupt or something
+    gpio_set_level(solenoid_gpio_pin,1); //Release solenoid
+    goto_rod_position(&rod_CASTfinish_move_params,rod_cast_finish_pos,1,1);  //Start Casting
+    vTaskDelay(1000/portTICK_PERIOD_MS);
+}
+
+void IRAM_ATTR AMT20enc_isr_handler(void* args){
+    static DRAM_ATTR int8_t lookup_table[] = {0,-1,1,0,1,0,0,-1,-1,0,0,1,0,1,-1,0};
+    static DRAM_ATTR int enc_val = 0;
+    enc_val = enc_val << 2;
+    enc_val = enc_val | ((gpio_get_level(EncA_GPIO) << 1) + gpio_get_level(EncB_GPIO));
+    esp_quadenc_position = esp_quadenc_position + lookup_table[enc_val & 0b1111];
+
+    if(casting_semaphore){
+        if(esp_quadenc_position == rod_cast_release_pos){
+            casting_semaphore = 0;
+            gpio_set_level(solenoid_gpio_pin,1);
+        }
+    }
 
 }
 
