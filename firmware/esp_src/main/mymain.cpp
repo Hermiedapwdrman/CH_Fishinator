@@ -42,13 +42,15 @@ HardwareSerial HWSerial(1);
 RoboClaw roboclaw(&HWSerial,10000);
 
 
-/**Fishing rod testing functions **/
-const int32_t rod_cast_begin_pos = 3450;
-int32_t rod_cast_release_pos = 2600;
-const int32_t rod_cast_finish_pos = 1250;
-const int32_t rod_hook_pos = 2400;
-const int32_t rod_neutral_pos = 1760;
+/**Fishing rod testing variables **/
+const int32_t rod_cast_begin_pos = 3230;
+int32_t rod_cast_release_pos = 2270;
+const int32_t rod_cast_finish_pos = 950;
+const int32_t rod_hook_pos = 2000;
+const int32_t rod_neutral_pos = 1500;
 const int32_t reel_pwm_drive = 0x4000;
+const int32_t rod_MAX_pos = 3400;
+const int32_t rod_MIN_pos = 850;
 
 typedef struct{
   int32_t pid_P;
@@ -62,17 +64,33 @@ typedef struct{
   int32_t accel_decel;
 }rod_control_params_t;
 
-rod_control_params_t rod_slow_move_params ={2000, 2, 4000, 40, 20, 1000, 4000, 200, 400};
-rod_control_params_t rod_CAST_move_params ={10000, 40, 80000, 1000, 20, 1000, 4000, 90000, 30000};
+rod_control_params_t rod_slow_move_params ={2000, 2, 4000, 40, 20, rod_MIN_pos, rod_MAX_pos, 200, 400};
+rod_control_params_t rod_CASTstart_move_params ={10000, 40, 80000, 1000, 20, rod_MIN_pos, rod_MAX_pos, 90000, 30000};
+rod_control_params_t rod_CASTfinish_move_params ={2000, 2, 4000, 100, 20, rod_MIN_pos, rod_MAX_pos, 3000, 10000};
 
-//Fishing control functions
+/**Fishing rod control functions, encoder manip functions **/
 void fishing_rod_cast_sequence();
-void goto_rod_position(rod_control_params_t* params, int16_t destination, boolean buffer_move = 0, boolean update_params = true);
+void goto_rod_position(rod_control_params_t* params, int16_t destination, boolean override_current_move = true, boolean update_params = true);
 
 void sync_encoders(){
     AMT20_abs_position = Aencoder.readEncoderPosition();
     esp_quadenc_position = AMT20_abs_position;
     roboclaw.SetEncM1(roboclaw_addr,AMT20_abs_position);
+}
+
+void print_encoder_info(){
+    bool RC_valid_flag = false;
+    uint8_t RC_status = 0;
+
+    AMT20_abs_position = Aencoder.readEncoderPosition();
+    roboclaw_position = roboclaw.ReadEncM1(roboclaw_addr, &RC_status, &RC_valid_flag);
+    vTaskDelay(3/portTICK_PERIOD_MS);
+
+    printf("Abs. Pos: %i \t\t", AMT20_abs_position);
+    printf("Quad Pos: %i \t\t", esp_quadenc_position);
+    printf("Roboclaw Quad: %i \t\t", roboclaw_position);
+    printf("RC Flag: %i  RC Status: %i \n", RC_valid_flag,RC_status);
+
 }
 
 /** Solenoid GPI Config **/
@@ -161,8 +179,7 @@ void print_task(void *novars) {
 }
 
 void control_comm_task(void* novars){
-    bool RC_valid_flag = false;
-    uint8_t RC_status = 0;
+
 
     while(1) {
         int inchar = 0;
@@ -174,34 +191,25 @@ void control_comm_task(void* novars){
         switch (inchar) {
             case 't':  //Re-calibrate encoders
                 sync_encoders();
-////                AMT20_abs_position = Aencoder.readEncoderPosition();
-////                vTaskDelay(2/portTICK_PERIOD_MS);
-//                AMT20_abs_position = Aencoder.readEncoderPosition();  //Why do we need to call twice?
-//                esp_quadenc_position = AMT20_abs_position;
-//                roboclaw.SetEncM1(roboclaw_addr,AMT20_abs_position);
+                ets_delay_us(100);
+                print_encoder_info();
                 break;
             case 'r':
-                AMT20_abs_position = Aencoder.readEncoderPosition();
-                roboclaw_position = roboclaw.ReadEncM1(roboclaw_addr, &RC_status, &RC_valid_flag);
-
-                printf("Abs. Pos: %i \t\t", AMT20_abs_position);
-                printf("Quad Pos: %i \t\t", esp_quadenc_position);
-                printf("Roboclaw Quad: %i \t\t", roboclaw_position);
-                printf("RC Flag: %i  RC Status: %i \n", RC_valid_flag,RC_status);
+                print_encoder_info();
                 break;
 
             case 'a': // Go to cast start
                 printf("Destination: %i \n", rod_cast_begin_pos);
-                goto_rod_position(&rod_slow_move_params, rod_cast_begin_pos);
+                goto_rod_position(&rod_slow_move_params, rod_cast_begin_pos,1,1);
                 break;
 
             case 's': // Go to cast release location
                 printf("Destination: %i \n", rod_cast_release_pos);
-                goto_rod_position(&rod_slow_move_params, rod_cast_release_pos);
+                goto_rod_position(&rod_slow_move_params, rod_cast_release_pos,1,1);
                 break;
             case 'd': // Go to cast finish location
                 printf("Destination: %i \n", rod_cast_finish_pos);
-                goto_rod_position(&rod_slow_move_params, rod_cast_finish_pos);
+                goto_rod_position(&rod_slow_move_params, rod_cast_finish_pos,1,1);
 //                goto_rod_position(&rod_CAST_move_params, rod_cast_finish_pos);
                 break;
 
@@ -242,6 +250,17 @@ void control_comm_task(void* novars){
                 rod_cast_release_pos -= 5;
                 printf("Cast Release: %i\n", rod_cast_release_pos);
                 break;
+            case 'z':  //Roboclaw energency stop?
+            case 'x':
+            case ' ':
+
+//            case '?':  //Set encoder zero, and sync encoders
+//                Aencoder.setEncoderZero();
+//                ets_delay_us(100);
+//                sync_encoders();
+//                ets_delay_us(100);
+//                print_encoder_info();
+//                break;
 
             default:
 //                putchar('+');
@@ -258,16 +277,23 @@ void control_comm_task(void* novars){
 
 }
 
-void goto_rod_position(rod_control_params_t* params, int16_t destination, boolean buffer_move, boolean update_params){
+
+
+void goto_rod_position(rod_control_params_t* params, int16_t destination, boolean override_current_move, boolean update_params){
     bool RC_valid_flag = false;
     uint8_t RC_status = 0;
 
     if(update_params) roboclaw.SetM1PositionPID(roboclaw_addr,params->pid_P,params->pid_I,params->pid_D,
                               params->pid_maxI,params->deadzone, params->min_position,params->max_position);
 
+    vTaskDelay(3/portTICK_PERIOD_MS);
 //    ets_delay_us(20);
-    roboclaw.SpeedAccelDeccelPositionM1(roboclaw_addr,params->accel_decel,params->speed, params->accel_decel, destination, buffer_move);
+    roboclaw.SpeedAccelDeccelPositionM1(roboclaw_addr,params->accel_decel,params->speed, params->accel_decel, destination, override_current_move);
 }
 
+void fishing_rod_cast_sequence(){
 
+
+
+}
 
