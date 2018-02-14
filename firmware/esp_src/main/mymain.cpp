@@ -63,12 +63,13 @@ typedef struct{
   int32_t min_position;
   int32_t max_position;
   int32_t speed;
-  int32_t accel_decel;
+  int32_t accel;
+  int32_t decel;
 }rod_control_params_t;
 
-rod_control_params_t rod_slow_move_params ={3000, 3, 6000, 40, 20, rod_MIN_pos, rod_MAX_pos, 300, 600};
-rod_control_params_t rod_CASTstart_move_params ={10000, 40, 80000, 1000, 20, rod_MIN_pos, rod_MAX_pos, 90000, 30000};
-rod_control_params_t rod_CASTfinish_move_params ={8000, 10, 20000, 200, 20, rod_MIN_pos, rod_MAX_pos, 500, 6000};
+rod_control_params_t rod_slow_move_params ={3000, 3, 6000, 40, 20, rod_MIN_pos, rod_MAX_pos, 300, 600, 600};
+rod_control_params_t rod_CASTstart_move_params ={10000, 40, 80000, 1000, 20, rod_MIN_pos, rod_MAX_pos, 15000, 20000, 30000};
+//rod_control_params_t rod_CASTfinish_move_params ={8000, 10, 20000, 200, 20, rod_MIN_pos, rod_MAX_pos, 500, 20000};
 
 /**Fishing rod control functions, encoder manip functions **/
 void fishing_rod_cast_sequence();
@@ -196,7 +197,7 @@ void control_comm_task(void* novars){
                 ets_delay_us(100);
                 print_encoder_info();
                 break;
-            case 'r':
+            case 'r':  //Print encoder info
                 print_encoder_info();
                 break;
 
@@ -249,6 +250,16 @@ void control_comm_task(void* novars){
                 rod_cast_release_pos -= 5;
                 printf("Cast Release: %i\n", rod_cast_release_pos);
                 break;
+            case 'n': //Advanced accell 1000 qpps
+                rod_CASTstart_move_params.decel += 1000;
+                printf("Cast Accel: %i\n", rod_CASTstart_move_params.accel);
+                break;
+
+            case 'm': //Deccel 1000 qpps
+                rod_CASTstart_move_params.accel -= 1000;
+                rod_CASTstart_move_params.decel -= 1000;
+                printf("Cast Accel: %i\n", rod_CASTstart_move_params.accel);
+                break;
             case 'z':  //Roboclaw energency stop?
             case 'x':
             case ' ':
@@ -287,29 +298,30 @@ void goto_rod_position(rod_control_params_t* params, int16_t destination, boolea
 
     vTaskDelay(3/portTICK_PERIOD_MS);
 //    ets_delay_us(20);
-    roboclaw.SpeedAccelDeccelPositionM1(roboclaw_addr,params->accel_decel,params->speed, params->accel_decel, destination, override_current_move);
+    roboclaw.SpeedAccelDeccelPositionM1(roboclaw_addr,params->accel,params->speed, params->decel, destination, override_current_move);
 }
 
 void fishing_rod_cast_sequence(){
     //Some sort of enable flag and/or semaphore take?
 
     sync_encoders();  //Sync encoders
-    vTaskDelay(20/portTICK_PERIOD_MS);  //Yield for encoder sync to finish
+//    vTaskDelay(100/portTICK_PERIOD_MS);  //Yield for encoder sync to finish
     gpio_set_level(solenoid_gpio_pin,0); //Low Active.
+    vTaskDelay(200/portTICK_PERIOD_MS);  //Yield for encoder sync to finish and solenoid to engage
 
     goto_rod_position(&rod_CASTstart_move_params,rod_neutral_pos,1,1);  //Start Casting
-    vTaskDelay(250/portTICK_PERIOD_MS); //Yield for a while, while the motor gets going.
+    vTaskDelay(100/portTICK_PERIOD_MS); //Yield for a while, while the motor gets going.
 
-    casting_semaphore = true;
+    casting_semaphore = true;  //Set semaphore flag which will trigger a comparison in Esp encoder ISR to release solenoid
     while(casting_semaphore) {
 //        putchar('.');
 //        vTaskDelay(1 / portTICK_PERIOD_MS);  //Block(yield cpu) while waiting for solenoid release.
         ets_delay_us(50);
     }
-    //Enter critical section or
-    //Watch encoder value//attach interrupt or something
     gpio_set_level(solenoid_gpio_pin,1); //Release solenoid
-    goto_rod_position(&rod_CASTfinish_move_params,rod_cast_finish_pos,1,1);  //Start Casting
+    vTaskDelay(1200/portTICK_PERIOD_MS);
+//    goto_rod_position(&rod_CASTfinish_move_params,rod_cast_finish_pos,1,1);  //Start Casting
+    goto_rod_position(&rod_slow_move_params,rod_cast_finish_pos,0,1);  //Start Casting
     vTaskDelay(1000/portTICK_PERIOD_MS);
 }
 
