@@ -45,7 +45,7 @@ RoboClaw roboclaw(&HWSerial,10000);
 /**Fishing rod testing variables **/
 const int32_t rod_cast_begin_pos = 3230;
 int32_t rod_cast_release_pos = 2270;
-const int32_t rod_cast_finish_pos = 950;
+const int32_t rod_cast_finish_pos = 1000;
 const int32_t rod_hook_pos = 2000;
 const int32_t rod_neutral_pos = 1500;
 const int32_t reel_pwm_drive = 0x4000;
@@ -67,7 +67,7 @@ typedef struct{
   int32_t decel;
 }rod_control_params_t;
 
-rod_control_params_t rod_slow_move_params ={3000, 3, 6000, 40, 20, rod_MIN_pos, rod_MAX_pos, 300, 600, 600};
+rod_control_params_t rod_slow_move_params ={4000, 4, 8000, 50, 20, rod_MIN_pos, rod_MAX_pos, 400, 800, 800};
 rod_control_params_t rod_CASTstart_move_params ={10000, 40, 80000, 1000, 20, rod_MIN_pos, rod_MAX_pos, 15000, 20000, 30000};
 //rod_control_params_t rod_CASTfinish_move_params ={8000, 10, 20000, 200, 20, rod_MIN_pos, rod_MAX_pos, 500, 20000};
 
@@ -251,6 +251,7 @@ void control_comm_task(void* novars){
                 printf("Cast Release: %i\n", rod_cast_release_pos);
                 break;
             case 'n': //Advanced accell 1000 qpps
+                rod_CASTstart_move_params.accel += 1000;
                 rod_CASTstart_move_params.decel += 1000;
                 printf("Cast Accel: %i\n", rod_CASTstart_move_params.accel);
                 break;
