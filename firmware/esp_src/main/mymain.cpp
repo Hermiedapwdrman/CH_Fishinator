@@ -35,6 +35,7 @@ volatile DRAM_ATTR int32_t esp_quadenc_position = 0;  //Encoder global counter f
 //DRAM_ATTR int32_t roboclaw_position = 0;
 int16_t AMT20_abs_position = -1;
 int32_t roboclaw_position = 0;
+volatile long cast_duration_timer = 0;
 
 /** Roboclaw setup **/
 #define roboclaw_addr 0x80
@@ -43,8 +44,8 @@ RoboClaw roboclaw(&HWSerial,10000);
 
 
 /**Fishing rod testing variables **/
-const int32_t rod_cast_begin_pos = 3230;
-int32_t rod_cast_release_pos = 2270;
+const int32_t rod_cast_begin_pos = 3300;
+int32_t rod_cast_release_pos = 2300;
 const int32_t rod_cast_finish_pos = 1000;
 const int32_t rod_hook_pos = 2000;
 const int32_t rod_neutral_pos = 1500;
@@ -304,6 +305,9 @@ void goto_rod_position(rod_control_params_t* params, int16_t destination, boolea
 
 void fishing_rod_cast_sequence(){
     //Some sort of enable flag and/or semaphore take?
+    bool RC_valid_flag = false;
+    uint8_t RC_status = 0;
+    int32_t M1speed = 0;
 
     sync_encoders();  //Sync encoders
 //    vTaskDelay(100/portTICK_PERIOD_MS);  //Yield for encoder sync to finish
@@ -311,6 +315,7 @@ void fishing_rod_cast_sequence(){
     vTaskDelay(200/portTICK_PERIOD_MS);  //Yield for encoder sync to finish and solenoid to engage
 
     goto_rod_position(&rod_CASTstart_move_params,rod_neutral_pos,1,1);  //Start Casting
+    cast_duration_timer = micros();
     vTaskDelay(100/portTICK_PERIOD_MS); //Yield for a while, while the motor gets going.
 
     casting_semaphore = true;  //Set semaphore flag which will trigger a comparison in Esp encoder ISR to release solenoid
@@ -320,10 +325,13 @@ void fishing_rod_cast_sequence(){
         ets_delay_us(50);
     }
     gpio_set_level(solenoid_gpio_pin,1); //Release solenoid
+    M1speed = roboclaw.ReadSpeedM1(roboclaw_addr,&RC_status,&RC_valid_flag);
     vTaskDelay(1200/portTICK_PERIOD_MS);
 //    goto_rod_position(&rod_CASTfinish_move_params,rod_cast_finish_pos,1,1);  //Start Casting
     goto_rod_position(&rod_slow_move_params,rod_cast_finish_pos,0,1);  //Start Casting
     vTaskDelay(1000/portTICK_PERIOD_MS);
+    printf("Speed(cps): %i\n",M1speed);  //Test release speed printout
+    printf("Dur(us): %i\n",static_cast<uint32_t>(cast_duration_timer));
 }
 
 void IRAM_ATTR AMT20enc_isr_handler(void* args){
@@ -337,6 +345,7 @@ void IRAM_ATTR AMT20enc_isr_handler(void* args){
         if(esp_quadenc_position == rod_cast_release_pos){
             casting_semaphore = 0;
             gpio_set_level(solenoid_gpio_pin,1);
+            cast_duration_timer = (cast_duration_timer- micros());
         }
     }
 
