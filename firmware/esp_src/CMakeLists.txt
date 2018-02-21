@@ -9,6 +9,10 @@ include(scripts_clion/esp_buildflags.cmake)
 include(scripts_clion/esp_arduino_includes.cmake)
 include(scripts_clion/esp_idf_includes.cmake)
 include(scripts_clion/esp_make_scripts.cmake)
+include(scripts_clion/esp_snippets_includes.cmake)
+
+#You can also include certain build flags for the indexter to help resolve code.
+add_definitions(-DCONFIG_BT_ENABLED)  #EspIDF bluetooth enabled build flag
 
 #include library scripts, if cmake lists are made for external libraries then you can include them here.
 # do note that this is only for the indexer and the esp-idf build system does resolve includes from these

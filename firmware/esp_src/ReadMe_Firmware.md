@@ -39,11 +39,24 @@ Basic esp firmware project structure is as follows:
     * This configuration is saved at **sdkconfig**
     * BT/BLE/WIFI, Arduino control and other 'sub modules/peripherials' are activated via the GUI
     * Note: Upload ports, serial speeds and some other interface stuff here too.
-    
-5) Note: app_main() is declared as a c function, if your main source is a .cpp file, make sure to prepend  **extern "C"** onto function definition.
-
 
 ###### Reference docs: https://esp-idf.readthedocs.io/
+
+#### Adding a main function
+
+When working with C++, your calling function should also be written in C++.  Consider replacing your `main.c` with the following
+`main.cpp` file:
+
+```
+extern "C" {
+   void app_main();
+}
+
+void app_main() {
+   // Your code goes here
+}    
+```
+
 
   
 #### Regarding arduino-esp32 as a component:
@@ -51,17 +64,16 @@ Basic esp firmware project structure is as follows:
 ###### Note: Check the repo branches, there might be minor difference betweeen IDF and Arduino templates.
 
 1) If you are not using arduino, you can de-init the component submodule by using the command `git submodule deinit components/arduino-esp32` 
-  * To reinit use `git supmodule init components/arduino-esp32 && git supmodule update`  
+    * To reinit use `git supmodule init components/arduino-esp32 && git supmodule update`  
 
 2) If you want to user setup() and loop() you must set it in the **sdkconfig**
-  * __makemenu -> components --> start arduino on boot__
+    * __makemenu -> components --> start arduino on boot__
   
 3) If the libraries will not compile, IE BT and Wifi, you will need
 to activate them in the **sdkconfig --> components** then it will build.
   
 4) In both cases, your main source fil needs to be a .cpp file, else the arduino sdk build will fail
-    * If you are using app_main(), it needs to be preceeded by `extern "C"`
-    
+
 4) Reference: https://github.com/espressif/arduino-esp32#using-as-esp-idf-component
   
 
