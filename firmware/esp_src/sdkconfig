@@ -252,6 +252,11 @@ CONFIG_ESP32_PHY_MAX_TX_POWER=20
 CONFIG_PM_ENABLE=
 
 #
+# nkolban's c++ wrappers
+#
+CONFIG_NKOLBAN=y
+
+#
 # Ethernet
 #
 CONFIG_DMA_RX_BUF_NUM=10

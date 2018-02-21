@@ -7,3 +7,6 @@
 [submodule "HID_Joystick"]
 	path = firmware/esp_src/components/HID_Joystick
 	url = /CH/development/libraries/HID_Joystick
+[submodule "firmware/esp_src/components/esp32-snippets"]
+	path = firmware/esp_src/components/esp32-snippets
+	url = /CH/development/libraries/esp32-snippets/
