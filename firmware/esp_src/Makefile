@@ -16,7 +16,7 @@ PROJECT_NAME := app-template
 #COMPONENT_PRIV_INCLUDEDIRS := /CH/development/lib_global_ext/example_library/include	 # Will not work
 
 #For adding headers with absolute paths, you must use the following commands with absolute paths.
-COMPONENT_EXTRA_INCLUDEDIRS := /CH/development/lib_global_ext/example_library/include	 # Works
+#COMPONENT_EXTRA_INCLUDEDIRS := /CH/development/lib_global_ext/example_library/include	 # Works
 
 
 include ./components/esp-idf/make/project.mk

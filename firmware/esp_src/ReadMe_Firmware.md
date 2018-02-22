@@ -18,6 +18,8 @@ Basic esp firmware project structure is as follows:
 * ./scripts_clion: contains cmake files with preproccor defines, include paths and compiler flags, SOLELY for the benifit of the indexer.
 * ./cmake-build-xxxx: The directory the cmake build process builds, we are using make, not cmake, so this directory is not usefull.
 * ./build: Build directory populated by esp-idf make build system. Has all the compiled objects and binaries.
+    * ./build/include/confi: holds "sdkconfig.h" which is the file generated from the build system that contains all the IDF preproccesor
+     flags used by the build system.  You can include this file in the indexer while coding, it does **not** need to be included in your source.
 
 
 #### Cloning project template for a new project
