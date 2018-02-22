@@ -22,7 +22,7 @@
  */
 
 
-//extern "C" void app_main()
+//void myMain()
 //{
 //    printf("Hello world!\n");
 //
@@ -47,13 +47,19 @@
 //    fflush(stdout);
 //    esp_restart();
 //}
+//
+//extern "C"{ void app_main(){
+//    myMain();
+//}}
+
+
 
 /**
  * Example code for arduino as component of IDF build system.  initArduino() is required to use arduino libraries/classes.
  */
 
 
-extern "C" void app_main()
+void myMain()
 {
     initArduino();
 
@@ -72,6 +78,10 @@ extern "C" void app_main()
     fflush(stdout);
     esp_restart();
 }
+
+extern "C"{ void app_main(){
+    myMain();
+}}
 
 /**
  * Example code for setup, loop arduino execution code could be run through arduino build system.
