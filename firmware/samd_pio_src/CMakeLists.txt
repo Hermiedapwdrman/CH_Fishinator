@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.2)
-project(AAA_Template_samd_pio_src)
+project(samd_pio_src)
 
 include(CMakeListsPrivate.txt)
 
