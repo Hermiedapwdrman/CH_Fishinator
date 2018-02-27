@@ -33,7 +33,7 @@ void echo_task(void *){
         uint16_t bytecount =SerialSamD.available();
         if (bytecount > 0){
             SerialSamD.readBytes(serial2buffer,bytecount);
-            printf(".\n");
+//            printf(".\n");
 
         }
 
@@ -47,7 +47,7 @@ void echo_task(void *){
 
         fwrite(serial2buffer, bytecount,1,stdout);
 
-        vTaskDelay(100/portTICK_PERIOD_MS);
+        vTaskDelay(5/portTICK_PERIOD_MS);
     }
 
 }
