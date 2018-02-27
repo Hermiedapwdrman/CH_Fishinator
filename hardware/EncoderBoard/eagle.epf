@@ -1,0 +1,51 @@
+[Eagle]
+Version="07 07 00"
+Platform="Linux"
+Serial="700ABBF3CD-LSR-WLM-1SS"
+Globals="Globals"
+Desktop="Desktop"
+
+[Globals]
+AutoSaveProject=1
+UsedLibrary="/CH/eagle/libraries/SparkFun-Eagle-Libraries/LilyPad-Wearables.lbr"
+UsedLibrary="/CH/eagle/libraries/SparkFun-Eagle-Libraries/SparkFun-Aesthetics.lbr"
+UsedLibrary="/CH/eagle/libraries/SparkFun-Eagle-Libraries/SparkFun-Batteries.lbr"
+UsedLibrary="/CH/eagle/libraries/SparkFun-Eagle-Libraries/SparkFun-Boards.lbr"
+UsedLibrary="/CH/eagle/libraries/SparkFun-Eagle-Libraries/SparkFun-Capacitors.lbr"
+UsedLibrary="/CH/eagle/libraries/SparkFun-Eagle-Libraries/SparkFun-Clocks.lbr"
+UsedLibrary="/CH/eagle/libraries/SparkFun-Eagle-Libraries/SparkFun-Connectors.lbr"
+UsedLibrary="/CH/eagle/libraries/SparkFun-Eagle-Libraries/SparkFun-Coils.lbr"
+UsedLibrary="/CH/eagle/libraries/SparkFun-Eagle-Libraries/SparkFun-DiscreteSemi.lbr"
+UsedLibrary="/CH/eagle/libraries/SparkFun-Eagle-Libraries/SparkFun-Displays.lbr"
+UsedLibrary="/CH/eagle/libraries/SparkFun-Eagle-Libraries/SparkFun-Electromechanical.lbr"
+UsedLibrary="/CH/eagle/libraries/SparkFun-Eagle-Libraries/SparkFun-Fuses.lbr"
+UsedLibrary="/CH/eagle/libraries/SparkFun-Eagle-Libraries/SparkFun-GPS.lbr"
+UsedLibrary="/CH/eagle/libraries/SparkFun-Eagle-Libraries/SparkFun-Hardware.lbr"
+UsedLibrary="/CH/eagle/libraries/SparkFun-Eagle-Libraries/SparkFun-IC-Amplifiers.lbr"
+UsedLibrary="/CH/eagle/libraries/SparkFun-Eagle-Libraries/SparkFun-IC-Comms.lbr"
+UsedLibrary="/CH/eagle/libraries/SparkFun-Eagle-Libraries/SparkFun-IC-Conversion.lbr"
+UsedLibrary="/CH/eagle/libraries/SparkFun-Eagle-Libraries/SparkFun-IC-Logic.lbr"
+UsedLibrary="/CH/eagle/libraries/SparkFun-Eagle-Libraries/SparkFun-IC-Memory.lbr"
+UsedLibrary="/CH/eagle/libraries/SparkFun-Eagle-Libraries/SparkFun-IC-Microcontroller.lbr"
+UsedLibrary="/CH/eagle/libraries/SparkFun-Eagle-Libraries/SparkFun-IC-Special-Function.lbr"
+UsedLibrary="/CH/eagle/libraries/SparkFun-Eagle-Libraries/SparkFun-Jumpers.lbr"
+UsedLibrary="/CH/eagle/libraries/SparkFun-Eagle-Libraries/SparkFun-LED.lbr"
+UsedLibrary="/CH/eagle/libraries/SparkFun-Eagle-Libraries/SparkFun-IC-Power.lbr"
+UsedLibrary="/CH/eagle/libraries/SparkFun-Eagle-Libraries/SparkFun-RF.lbr"
+UsedLibrary="/CH/eagle/libraries/SparkFun-Eagle-Libraries/SparkFun-PowerSymbols.lbr"
+UsedLibrary="/CH/eagle/libraries/SparkFun-Eagle-Libraries/SparkFun-Resistors.lbr"
+UsedLibrary="/CH/eagle/libraries/SparkFun-Eagle-Libraries/SparkFun-Retired.lbr"
+UsedLibrary="/CH/eagle/libraries/SparkFun-Eagle-Libraries/SparkFun-Sensors.lbr"
+UsedLibrary="/CH/eagle/libraries/SparkFun-Eagle-Libraries/SparkFun-Switches.lbr"
+UsedLibrary="/CH/eagle/libraries/SparkFun-Eagle-Libraries/User-Submitted.lbr"
+UsedLibrary="/CH/eagle/libraries/personal/!!Pat_030112.lbr"
+
+[Win_1]
+Type="Control Panel"
+Loc="65 25 1639 1145"
+State=2
+Number=0
+
+[Desktop]
+Screen="3840 1200"
+Window="Win_1"
