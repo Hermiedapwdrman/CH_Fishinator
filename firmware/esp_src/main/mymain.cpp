@@ -13,43 +13,66 @@
 #include <esp_log.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "driver/uart.h"
+
 
 #include <Arduino.h>
 
 /**SAMD declarations **/
 #define SAMD_TX_PIN 12
 #define SAMD_RX_PIN 14
-HardwareSerial SerialSamD(2);
-uint8_t serial2buffer[1024];
+//HardwareSerial SerialSamD(2);
+//uint8_t serial2buffer[1024];
+
+//Uart Buffer 2
+#define BUF_SIZE (1024)
+const uart_port_t uart_two = UART_NUM_1;
+uint8_t* uart2_buffer = (uint8_t*) malloc(BUF_SIZE);
+
+void uartinit(void){
+
+        uart_config_t uart_two_config = {
+          .baud_rate = 921600,
+          .data_bits = UART_DATA_8_BITS,
+          .parity = UART_PARITY_DISABLE,
+          .stop_bits = UART_STOP_BITS_1,
+          .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
+          .rx_flow_ctrl_thresh = 122,
+          .use_ref_tick = false,
+    };
+
+    uart_param_config(uart_two, &uart_two_config);
+    uart_set_pin(uart_two, SAMD_TX_PIN, SAMD_RX_PIN,UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
+    uart_driver_install(uart_two, BUF_SIZE * 2, 0, 0, NULL, 0);
+
+}
 
 void echo_task(void *){
+    size_t buf_count = 0;
     while (1){
-//        uint16_t bytecount = 0;
-//        while(SerialSamD.available() > 0);
-//        {
-//            serial2buffer[bytecount] =SerialSamD.read();
-//            bytecount++;
-//            printf("x");
-//        }
 
-        uint16_t bytecount =SerialSamD.available();
-        if (bytecount > 0){
-            SerialSamD.readBytes(serial2buffer,bytecount);
-            printf("#");
-            fwrite(serial2buffer, bytecount,1,stdout);
+        uart_get_buffered_data_len(uart_two,&buf_count);
+
+        if(buf_count >0){
+            uart_read_bytes(uart_two,uart2_buffer,buf_count,5/portTICK_PERIOD_MS);
+
+
+            fwrite(uart2_buffer, buf_count,1,stdout);
         }
-        else if (bytecount == 0) vTaskDelay(1/portTICK_PERIOD_MS);  // 64 bytes can take a little as 0.55ms to send (possibly to miss chars!)
+        else {
+//            printf(".");
+            vTaskDelay(5 / portTICK_PERIOD_MS);
+        }
 
-
-//        for(unsigned int ii = 0; ii <= bytecount; ii++){
-//            serial2buffer[ii] =SerialSamD.read();
+//        uint16_t bytecount =SerialSamD.available();
+//        if (bytecount > 0){
+//            SerialSamD.readBytes(serial2buffer,bytecount);
+//            printf("#");
+//            fwrite(serial2buffer, bytecount,1,stdout);
 //        }
-//        {
-//            SerialSamD.readBytes(serial2buffer,1);
-//            bytecount++;
-//        }
+//        else if (bytecount == 0) vTaskDelay(1/portTICK_PERIOD_MS);  // 64 bytes can take a little as 0.55ms to send (possibly to miss chars!)
 
-//        fwrite(serial2buffer, bytecount,1,stdout);
+
 
     }
 
@@ -57,8 +80,8 @@ void echo_task(void *){
 
 
 void main_func(){
-    SerialSamD.begin(921600,SERIAL_8N1,SAMD_RX_PIN,SAMD_TX_PIN);  //115200 works with samd
-
+    uartinit();
+//    SerialSamD.begin(921600,SERIAL_8N1,SAMD_RX_PIN,SAMD_TX_PIN);  //115200 works with samd
     xTaskCreate(&echo_task,"Echo_Task",8192,NULL,2,NULL);
 }
 
