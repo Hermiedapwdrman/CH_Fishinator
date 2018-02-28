@@ -97,7 +97,8 @@ void PrintAddress(uint8_t addr)
 
 void setup()
 {
-    SERIAL_PORT_HARDWARE.begin( 115200 );
+//    SERIAL_PORT_HARDWARE.begin( 115200 );  //Works with esp
+    SERIAL_PORT_HARDWARE.begin(921600);
     while (!Serial); // Wait for serial port to connect - used on Leonardo, Teensy and other boards with built-in USB CDC serial connection
     SERIAL_PORT_HARDWARE.println("Start USB Desc");
 

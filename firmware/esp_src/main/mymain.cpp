@@ -24,18 +24,22 @@ uint8_t serial2buffer[1024];
 
 void echo_task(void *){
     while (1){
-//        uint16_t bytecount =0;
-//        while(SerialSamD.available());
+//        uint16_t bytecount = 0;
+//        while(SerialSamD.available() > 0);
 //        {
-//            SerialSamD.readBytes(serial2buffer,1);
+//            serial2buffer[bytecount] =SerialSamD.read();
 //            bytecount++;
+//            printf("x");
 //        }
+
         uint16_t bytecount =SerialSamD.available();
         if (bytecount > 0){
             SerialSamD.readBytes(serial2buffer,bytecount);
-//            printf(".\n");
-
+            printf("#");
+            fwrite(serial2buffer, bytecount,1,stdout);
         }
+        else if (bytecount == 0) vTaskDelay(1/portTICK_PERIOD_MS);  // 64 bytes can take a little as 0.55ms to send (possibly to miss chars!)
+
 
 //        for(unsigned int ii = 0; ii <= bytecount; ii++){
 //            serial2buffer[ii] =SerialSamD.read();
@@ -45,18 +49,17 @@ void echo_task(void *){
 //            bytecount++;
 //        }
 
-        fwrite(serial2buffer, bytecount,1,stdout);
+//        fwrite(serial2buffer, bytecount,1,stdout);
 
-        vTaskDelay(5/portTICK_PERIOD_MS);
     }
 
 }
 
 
 void main_func(){
-    SerialSamD.begin(115200,SERIAL_8N1,SAMD_RX_PIN,SAMD_TX_PIN);
+    SerialSamD.begin(921600,SERIAL_8N1,SAMD_RX_PIN,SAMD_TX_PIN);  //115200 works with samd
 
-    xTaskCreate(&echo_task,"Echo_Task",8192,NULL,1,NULL);
+    xTaskCreate(&echo_task,"Echo_Task",8192,NULL,2,NULL);
 }
 
 extern "C" { void app_main(){
