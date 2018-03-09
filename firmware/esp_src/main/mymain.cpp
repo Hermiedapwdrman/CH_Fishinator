@@ -17,10 +17,11 @@
 
 
 #include <Arduino.h>
+#include <SPI.h>
 
 /**SAMD declarations **/
-#define SAMD_TX_PIN 12
-#define SAMD_RX_PIN 14
+#define SAMD_TX_PIN 21
+#define SAMD_RX_PIN 22
 //HardwareSerial SerialSamD(2);
 //uint8_t serial2buffer[1024];
 
@@ -28,6 +29,7 @@
 #define BUF_SIZE (1024)
 const uart_port_t uart_two = UART_NUM_1;
 uint8_t* uart2_buffer = (uint8_t*) malloc(BUF_SIZE);
+HardwareSerial mySerial(1);
 
 void uartinit(void){
 
@@ -44,6 +46,8 @@ void uartinit(void){
     uart_param_config(uart_two, &uart_two_config);
     uart_set_pin(uart_two, SAMD_TX_PIN, SAMD_RX_PIN,UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
     uart_driver_install(uart_two, BUF_SIZE * 2, 0, 0, NULL, 0);
+
+    SPI.begin(14,12,13,15);
 
 }
 
