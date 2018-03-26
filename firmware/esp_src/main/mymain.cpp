@@ -56,20 +56,21 @@ const int32_t rod_MIN_pos = 850;
 volatile boolean casting_semaphore = false;
 
 typedef struct{
-  int32_t pid_P;
-  int32_t pid_I;
-  int32_t pid_D;
-  int32_t pid_maxI;
-  int32_t deadzone;
-  int32_t min_position;
-  int32_t max_position;
-  int32_t speed;
-  int32_t accel;
-  int32_t decel;
+  uint32_t pid_P;
+  uint32_t pid_I;
+  uint32_t pid_D;
+  uint32_t pid_maxI;
+  uint32_t deadzone;
+  uint32_t min_position;
+  uint32_t max_position;
+  uint32_t speed;
+  uint32_t accel;
+  uint32_t decel;
+  uint32_t qpps;
 }rod_control_params_t;
 
-rod_control_params_t rod_slow_move_params ={4000, 4, 8000, 50, 20, rod_MIN_pos, rod_MAX_pos, 400, 800, 800};
-rod_control_params_t rod_CASTstart_move_params ={10000, 40, 80000, 1000, 20, rod_MIN_pos, rod_MAX_pos, 15000, 20000, 30000};
+rod_control_params_t rod_slow_move_params ={4000, 4, 8000, 50, 20, rod_MIN_pos, rod_MAX_pos, 400, 800, 800,16000};
+rod_control_params_t rod_CASTstart_move_params ={10000, 40, 80000, 1000, 20, rod_MIN_pos, rod_MAX_pos, 15000, 20000, 30000,16000};
 //rod_control_params_t rod_CASTfinish_move_params ={8000, 10, 20000, 200, 20, rod_MIN_pos, rod_MAX_pos, 500, 20000};
 
 /**Fishing rod control functions, encoder manip functions **/
@@ -98,7 +99,7 @@ void print_encoder_info(){
 }
 
 /** Solenoid GPI Config **/
-const gpio_num_t solenoid_gpio_pin = GPIO_NUM_2;
+const gpio_num_t solenoid_gpio_pin = GPIO_NUM_19;
 const gpio_config_t Solenoid_GPIOconfig{ //Define Encoder B behavior, pin selection is arbitrary and might change
       .pin_bit_mask = (1<<solenoid_gpio_pin),
       .mode = GPIO_MODE_OUTPUT,
@@ -133,7 +134,7 @@ extern "C" void app_main()
     gpio_set_level(solenoid_gpio_pin,1);
 
     /** Trying arduino spi library **/
-    SPI.begin();
+    SPI.begin(14,12,13,15);
     roboclaw.begin(460800);
 //    roboclaw.begin(230400);
 
@@ -146,6 +147,14 @@ extern "C" void app_main()
         sync_encoders();
     }
     while(AMT20_abs_position == -1);
+    roboclaw.SetM1VelocityPID(roboclaw_addr,1,1,1,rod_slow_move_params.qpps);
+    ets_delay_us(2000);
+    roboclaw.SetM1PositionPID(roboclaw_addr,rod_slow_move_params.pid_P,rod_slow_move_params.pid_I,
+                              rod_slow_move_params.pid_D, rod_slow_move_params.pid_maxI,
+                              rod_slow_move_params.deadzone, rod_slow_move_params.min_position,
+                              rod_slow_move_params.max_position);
+    ets_delay_us(2000);
+
 
     //Create threads to handle program tasks.
 //    xTaskCreatePinnedToCore(&print_task, "print_task",configMINIMAL_STACK_SIZE,NULL,5,NULL,1);
