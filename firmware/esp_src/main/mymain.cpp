@@ -147,7 +147,7 @@ extern "C" void app_main()
         sync_encoders();
     }
     while(AMT20_abs_position == -1);
-    roboclaw.SetM1VelocityPID(roboclaw_addr,1,1,1,rod_slow_move_params.qpps);
+roboclaw.SetM1VelocityPID(roboclaw_addr,0,0,0,rod_slow_move_params.qpps);  //QPPS apparently needs to be set even if not using VPID
     ets_delay_us(2000);
     roboclaw.SetM1PositionPID(roboclaw_addr,rod_slow_move_params.pid_P,rod_slow_move_params.pid_I,
                               rod_slow_move_params.pid_D, rod_slow_move_params.pid_maxI,
