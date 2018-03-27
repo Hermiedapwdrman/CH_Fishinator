@@ -28,7 +28,7 @@
 static const char* TAG = "Fishinator";
 
 //Control and utility functions, mostly attached as tasks/threads to the RTOS scheduler.
-uint32_t comm_loop_delay = 50; //in msecs.  Determines reel behavior, test solenoid behavior
+uint32_t comm_loop_delay = 20; //in msecs.  Determines reel behavior, test solenoid behavior
 void control_comm_task(void* novars); //Monitor incoming com task
 
 
@@ -48,9 +48,9 @@ RoboClaw roboclaw(&HWSerial,10000);
 
 
 /**Fishing rod position variables **/
-const int32_t rod_cast_begin_pos = 3300;
+int32_t rod_cast_start_pos = 3300;
 int32_t rod_cast_release_pos = 2300;
-const int32_t rod_cast_finish_pos = 1000;
+int32_t rod_cast_retrieve_pos = 1000;
 const int32_t rod_hook_pos = 2000;
 const int32_t rod_neutral_pos = 1500;
 const int32_t rod_MAX_pos = 3400;
@@ -66,7 +66,8 @@ uint32_t rod_acc_decc_min = 1000;
 //Fishing rod state declarations
 volatile boolean casting_semaphore = false;
 int fishstate = 0;
-char manualmove = 0;
+int rod_manualmove_counter = 0;
+int reel_counter = 0;
 int fishStateMachine(int key, int state);
 
 typedef struct{
@@ -103,6 +104,7 @@ int get_inputchar(){
 
 void sync_encoders(){
     AMT20_abs_position = Aencoder.readEncoderPosition();
+//    ets_delay_us(3000);
     esp_quadenc_position = AMT20_abs_position;
     roboclaw.SetEncM1(roboclaw_addr,AMT20_abs_position);
 }
@@ -157,8 +159,10 @@ extern "C" void app_main()
     /** Trying arduino spi library **/
     SPI.begin(14,12,13,15);
     roboclaw.begin(460800);
+    ets_delay_us(5000);
 //    roboclaw.begin(230400);
-
+    roboclaw.DutyM1(roboclaw_addr,0);
+    roboclaw.DutyM2(roboclaw_addr,0);
 
 
     //Read abs encoder position and update
@@ -227,18 +231,44 @@ void control_comm_task(void* novars){
                 break;
 
             case '|':  //Set encoder zero, and sync encoders: NOTE Should be rod straight down.
-                Aencoder.setEncoderZero();
-                ets_delay_us(10000);
-                sync_encoders();
-                ets_delay_us(10000);
-                print_encoder_info();
+                roboclaw.DutyM1(roboclaw_addr, 0);
+                printf("Are you sure you want to overwrite encoder zero (Should be straight down)?\nPress 'y' to confirm: ");
+                inchar = get_inputchar();
+                putchar(inchar);
+                if (inchar == 'y'){
+                    Aencoder.setEncoderZero();
+                    ets_delay_us(10000);
+                    sync_encoders();
+                    ets_delay_us(10000);
+                    print_encoder_info();
+                }
+                printf(" \n");
                 break;
 
             case '=': //Fire solenoid for 30 ms, hold for longer
                 gpio_set_level(solenoid_gpio_pin,0);
                 break;
 
-            case ':': //Reset start and finish locations
+            case ':': //Reset start and finish locations manually
+                roboclaw.DutyM1(roboclaw_addr, 0);
+                printf("Position the rod in the CAST START location and press 'y', press any other key to skip: ");
+                inchar = get_inputchar();
+                putchar(inchar);
+                if(inchar == 'y'){
+                    sync_encoders();
+                    ets_delay_us(5000);
+                    rod_cast_start_pos = Aencoder.readEncoderPosition();
+                    printf("\nNew CAST START location = %i\n",rod_cast_start_pos);
+                }
+                printf("Position the rod in the RETRIEVE location and press 'y', press any other key to skip: ");
+                inchar = get_inputchar();
+                putchar(inchar);
+                if(inchar == 'y'){
+                    sync_encoders();
+                    ets_delay_us(5000);
+                    rod_cast_retrieve_pos = Aencoder.readEncoderPosition();
+                    printf("\nNew RETRIEVE location = %i\n",rod_cast_retrieve_pos);
+                }
 
                 break;
 
@@ -300,20 +330,26 @@ void control_comm_task(void* novars){
                 /// Joystick keymap
             case 'u':  //Joystick up:  Reel for 30ms
                 roboclaw.DutyM2(roboclaw_addr, reel_pwm_drive);
+                reel_counter = 4;
                 break;
 
             case 'd':  //Joystick down: Reel for 30ms(go slower?
                 roboclaw.DutyM2(roboclaw_addr, reel_pwm_drive_slow);
+                reel_counter = 4;
                 break;
 
+            case 'x':
             case 'l':  //Joystick left: Move rod forward.
-//                roboclaw.DutyM1(roboclaw_addr, -rod_slew_pwm_value);
-//                manualmove = 1;  //Flag to prevent other control loop moves from being screwed with
+                roboclaw.DutyM1(roboclaw_addr, -rod_slew_pwm_value);
+//                roboclaw.SpeedM1(roboclaw_addr,-100);
+                rod_manualmove_counter = 4;  //Flag to prevent other control loop moves from being screwed with
                 break;
 
+            case 'z':
             case 'r':  //Joystick right: Move rod backwards.
                 roboclaw.DutyM1(roboclaw_addr, rod_slew_pwm_value);
-//                manualmove = 1;  //Flag to prevent other control loop moves from being screwed with
+//                roboclaw.SpeedM1(roboclaw_addr,100);
+                rod_manualmove_counter = 4;  //Flag to prevent other control loop moves from being screwed with
                 break;
 
             case 'p':  //Lip switch:  Positive test for cast.
@@ -321,9 +357,27 @@ void control_comm_task(void* novars){
 
 
             default:
-                roboclaw.DutyM2(roboclaw_addr, 0);
-//                if(manualmove){ roboclaw.DutyM1(roboclaw_addr, 0);}
-//                else manualmove = 0;
+                /// Kludgy logic to simulate smooth rod movement when using left/right controls
+                if(reel_counter > 1) {
+                    reel_counter--;
+                }
+                else if (reel_counter == 1){
+                    roboclaw.DutyM2(roboclaw_addr, 0);
+                    reel_counter = 0;
+                }
+                else{reel_counter = 0;}
+
+                /// Kludgy logic to simulate smooth rod movement when using left/right controls
+                if(rod_manualmove_counter > 1) {
+                    rod_manualmove_counter--;
+                }
+                else if (rod_manualmove_counter == 1){
+                    roboclaw.DutyM1(roboclaw_addr, 0);
+                    rod_manualmove_counter = 0;
+                }
+                else{rod_manualmove_counter = 0;}
+
+                /// And make sure solenoid is off.
                 gpio_set_level(solenoid_gpio_pin,1);
                 break;
 
@@ -374,8 +428,8 @@ void fishing_rod_cast_sequence(){
     gpio_set_level(solenoid_gpio_pin,1); //Release solenoid
     M1speed = roboclaw.ReadSpeedM1(roboclaw_addr,&RC_status,&RC_valid_flag);
     vTaskDelay(1200/portTICK_PERIOD_MS);
-//    goto_rod_position(&rod_CASTfinish_move_params,rod_cast_finish_pos,1,1);  //Start Casting
-    goto_rod_position(&rod_slow_move_params,rod_cast_finish_pos,0,1);  //Start Casting
+//    goto_rod_position(&rod_CASTfinish_move_params,rod_cast_retrieve_pos,1,1);  //Start Casting
+    goto_rod_position(&rod_slow_move_params,rod_cast_retrieve_pos,0,1);  //Start Casting
     vTaskDelay(1000/portTICK_PERIOD_MS);
 //    printf("Speed(cps): %i\n",M1speed);  //Test release speed printout
 //    printf("Dur(us): %i\n",static_cast<uint32_t>(cast_duration_timer));
@@ -400,7 +454,7 @@ void IRAM_ATTR AMT20enc_isr_handler(void* args){
 
 int fishStateMachine(int key, int state){
     int nextstate = 0;
-    int exitwait = 0;
+    int skipprint = 0;
     int cc;
     static const char* subTAG = "FSM";
     char nextstate_text[25];
@@ -419,12 +473,12 @@ int fishStateMachine(int key, int state){
                 strcpy(astate_text, "CAST!!");
                 strcpy(cstate_text, "NEUTRAL");
 
-                goto_rod_position(&rod_slow_move_params,rod_cast_begin_pos,1,1);
+                goto_rod_position(&rod_slow_move_params,rod_cast_start_pos,1,1);
                 break;
 
             case 8: //Cast start, cast if success, go to retrieve
-
-                if(abs(Aencoder.readEncoderPosition() - rod_cast_begin_pos) <= 30) {
+                sync_encoders();
+                if(abs(rod_cast_start_pos - rod_cast_start_pos) <= 30) {
                     printf("Hit 'p', lip switch to cast, any other to cancel\n");
 //                    do {
 //                        cc = getchar();
@@ -442,16 +496,19 @@ int fishStateMachine(int key, int state){
                     } else {
                         nextstate = 8;
                         printf("\nWrong confirmation, no cast! Stay in CAST START\n\n");
+                        skipprint = 1;
                     }
                 }
                 else{
                     nextstate = 8;
-                    printf("Not in cast start position, re-sync with 't'! \n");
-                    printf("Start location should be: %i and is currently %i +/-30\n", rod_cast_begin_pos,Aencoder.readEncoderPosition());
+                    printf("\nOUT OF SYNC: Start location should be: %i and is currently %i +/-30\n", rod_cast_start_pos,Aencoder.readEncoderPosition());
+                    printf("Re-sync with 't' and try casting again! \n");
+                    skipprint = 1;
+
                 }
-                strcpy(nextstate_text, "CAST START");
-                strcpy(astate_text, "CAST!!!");
-                strcpy(cstate_text, "NEUTRAL");
+//                strcpy(nextstate_text, "CAST START");
+//                strcpy(astate_text, "CAST!!!");
+//                strcpy(cstate_text, "NEUTRAL");
                 break;
 
             case 4:  //Retrieve, go to neutral
@@ -473,6 +530,7 @@ int fishStateMachine(int key, int state){
                 break;
             case 0:
                 printf("State is 0, you haven't synced encoders, press 't'\n");
+                skipprint = 1;
                 break;
 
             default:
@@ -488,7 +546,7 @@ int fishStateMachine(int key, int state){
                 strcpy(astate_text, "NEUTRAL");
                 strcpy(cstate_text, "HOOK!");
 
-                goto_rod_position(&rod_slow_move_params,rod_cast_finish_pos,1,1);
+                goto_rod_position(&rod_slow_move_params,rod_cast_retrieve_pos,1,1);
                 break;
 
             case 8: //Cast start, go to neutral
@@ -515,10 +573,11 @@ int fishStateMachine(int key, int state){
                 strcpy(astate_text, "NEUTRAL");
                 strcpy(cstate_text, "HOOK!");
 
-                goto_rod_position(&rod_slow_move_params,rod_cast_finish_pos,1,1);
+                goto_rod_position(&rod_slow_move_params,rod_cast_retrieve_pos,1,1);
                 break;
             case 0:
                 printf("State is 0, you haven't synced encoders, press 't'\n");
+                skipprint = 1;
                 break;
 
             default:
@@ -529,13 +588,15 @@ int fishStateMachine(int key, int state){
     else {printf("ERROR: Fish Stat Machine no case \n");} //Do nothing, however shouldnt reach here.
 
 //    ESP_LOGI(subTAG,"CurrentState: %i, NextState: %i",state, nextstate);
-    printf("  Going to state: ");
-    printf(nextstate_text);
-    printf(", 'a' will then take you to: ");
-    printf(astate_text);
-    printf(", 'c' will take you to: ");
-    printf(cstate_text);
-    printf(". \n\n");
+    if (!skipprint) {
+        printf("  Going to state: ");
+        printf(nextstate_text);
+        printf(", 'a' will then take you to: ");
+        printf(astate_text);
+        printf(", 'c' will take you to: ");
+        printf(cstate_text);
+        printf(". \n\n");
+    }
 
     return nextstate;
 
