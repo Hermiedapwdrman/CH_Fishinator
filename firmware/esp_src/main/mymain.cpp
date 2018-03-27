@@ -14,17 +14,20 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
-
 //Arduino specific includes.
 #include <Arduino.h>
 #include <SPI.h>
-
 
 //Include third party libraries for specific program.
 #include "RoboClaw.h"
 #include "AMT20_ABSQUADENC_SPI.h"
 
-void print_task(void *novars);  //Print task for encoder value.
+//General tag for this project
+#include "fish_prompts.h"
+static const char* TAG = "Fishinator";
+
+//Control and utility functions, mostly attached as tasks/threads to the RTOS scheduler.
+uint32_t comm_loop_delay = 50; //in msecs.  Determines reel behavior, test solenoid behavior
 void control_comm_task(void* novars); //Monitor incoming com task
 
 
@@ -49,17 +52,20 @@ int32_t rod_cast_release_pos = 2300;
 const int32_t rod_cast_finish_pos = 1000;
 const int32_t rod_hook_pos = 2000;
 const int32_t rod_neutral_pos = 1500;
-const int32_t reel_pwm_drive = 0x4000;
-const int32_t reel_pwm_drive_slow = 0x2000;
-const int32_t rod_slew_pwm_value = 2000;
 const int32_t rod_MAX_pos = 3400;
 const int32_t rod_MIN_pos = 850;
+
+const int32_t reel_pwm_drive = 0x4000;
+const int32_t reel_pwm_drive_slow = 0x2000;
+const int32_t rod_slew_pwm_value = 1000;
+
 uint32_t rod_acc_decc_max = 50000;
 uint32_t rod_acc_decc_min = 1000;
 
 //Fishing rod state declarations
 volatile boolean casting_semaphore = false;
 int fishstate = 0;
+char manualmove = 0;
 int fishStateMachine(int key, int state);
 
 typedef struct{
@@ -95,13 +101,14 @@ void print_encoder_info(){
     uint8_t RC_status = 0;
 
     AMT20_abs_position = Aencoder.readEncoderPosition();
+    ets_delay_us(100);
     roboclaw_position = roboclaw.ReadEncM1(roboclaw_addr, &RC_status, &RC_valid_flag);
-    vTaskDelay(3/portTICK_PERIOD_MS);
+    vTaskDelay(3/portTICK_PERIOD_MS);  //See
 
     printf("Abs. Pos: %i \t\t", AMT20_abs_position);
     printf("Quad Pos: %i \t\t", esp_quadenc_position);
-    printf("Roboclaw Quad: %i \t\t", roboclaw_position);
-    printf("RC Flag: %i  RC Status: %i \n", RC_valid_flag,RC_status);
+//    printf("Roboclaw Quad: %i \t\t", roboclaw_position);
+//    printf("RC Flag: %i  RC Status: %i \n", RC_valid_flag,RC_status);
 
 }
 
@@ -123,11 +130,6 @@ extern "C" void app_main()
 {
     esp_err_t erret;  //Standard return code variable.
 
-
-
-    printf("Testing GPIO interrupts for encoder counting.!\n");
-    //TESTING using easier to implement arduino serial.
-//    Serial.begin(921600); //Use arduino serial class for ease.
 
 // Set GPIO for encoder counting.
     gpio_config(&EncA_GPIOconfig);
@@ -163,43 +165,22 @@ extern "C" void app_main()
     ets_delay_us(2000);
 
 
-    //Create threads to handle program tasks.
+    //System Init should be complete: Print welcome:
+    printf(fishp_intro);
+    printf("Version: %i.%i\n\n",FISH_MAJOR_REV,FISH_MINOR_REV);
+    printf(fishp_help);
+//    esp_log_write(ESP_LOG_INFO,TAG,fishp_intro); //Should not be used according to the library, use log macro.
+//    ESP_LOGI(TAG,fishp_test);
+
+    /// Create threads to handle program tasks.
 //    xTaskCreatePinnedToCore(&print_task, "print_task",configMINIMAL_STACK_SIZE,NULL,5,NULL,1);
-//    xTaskCreate(&print_task,"Print_Task",8192,NULL,1,NULL);
     xTaskCreate(&control_comm_task, "Comm task",8192,NULL, 2,NULL);
 //    xTaskCreate(&spi_AMT_encoder_task,"Encoder Task",8192,NULL,5,NULL);
 
-
-
 }
 
-
-void print_task(void *novars) {
-//    bool RC_valid_flag = false;
-//    uint8_t RC_status = 0;
-
-
-    for (;;) {
-        bool RC_valid_flag = false;
-        uint8_t RC_status = 0;
-//        AMT20_abs_position = read_AMT20_position();
-        AMT20_abs_position = Aencoder.readEncoderPosition();
-        ets_delay_us(30);
-        roboclaw_position = roboclaw.ReadEncM1(roboclaw_addr, &RC_status, &RC_valid_flag);
-
-        printf("Abs. Pos: %i \t\t", AMT20_abs_position);
-        printf("Quad Pos: %i \t\t", esp_quadenc_position);
-        printf("Roboclaw Quad: %i \t\t", roboclaw_position);
-        printf("RC Flag: %i  RC Status: %i \n", RC_valid_flag,RC_status);
-
-
-//        esp_task_wdt_reset();
-        vTaskDelay(3000 / portTICK_PERIOD_MS);
-    }
-}
 
 void control_comm_task(void* novars){
-
 
     while(1) {
         int inchar = 0;
@@ -210,6 +191,14 @@ void control_comm_task(void* novars){
 
         switch (inchar) {
             /** Setup and control cases **/
+            case '?':
+                printf(fishp_help);
+                break;
+
+            case 'y':  //Print each encoder value
+                print_encoder_info();
+                break;
+
             case 't':  //Re-sycronize encoders to abs value.
                 sync_encoders();
                 ets_delay_us(100);
@@ -217,20 +206,16 @@ void control_comm_task(void* novars){
                 fishstate = 2;
                 break;
 
-            case 'y':  //Print each encoder value
-                print_encoder_info();
-                break;
-
-            case '=': //Fire solenoid for 30 ms, hold for longer
-                gpio_set_level(solenoid_gpio_pin,0);
-                break;
-
-            case '?':  //Set encoder zero, and sync encoders: NOTE Should be rod straight down.
+            case '|':  //Set encoder zero, and sync encoders: NOTE Should be rod straight down.
                 Aencoder.setEncoderZero();
                 ets_delay_us(5000);
                 sync_encoders();
                 ets_delay_us(5000);
                 print_encoder_info();
+                break;
+
+            case '=': //Fire solenoid for 30 ms, hold for longer
+                gpio_set_level(solenoid_gpio_pin,0);
                 break;
 
                 ///Quadstick Mappings: See control document Fishing_Controls_StatMachine_dd.txt for other controls
@@ -252,6 +237,8 @@ void control_comm_task(void* novars){
             case 'f':  //Right Puff Hard  -> Cast speed increase
                 rod_CASTstart_move_params.accel = constrain((rod_CASTstart_move_params.accel + 1000), rod_acc_decc_min, rod_acc_decc_max);
                 rod_CASTstart_move_params.decel = constrain((rod_CASTstart_move_params.decel + 1000), rod_acc_decc_min, rod_acc_decc_max);
+                printf("Cast Speed: %i\n", rod_CASTstart_move_params.accel);
+
                 break;
 
             case 'g':  //Right Puff Soft
@@ -259,6 +246,8 @@ void control_comm_task(void* novars){
 
             case 'h':  //Right Sip Hard   -> Release Advanced
                 rod_cast_release_pos = constrain((rod_cast_release_pos-5),rod_MIN_pos,rod_MAX_pos);
+                printf("Cast Release: %i\n", rod_cast_release_pos);
+
                 break;
 
             case 'i':  //Right Sip Soft
@@ -268,6 +257,8 @@ void control_comm_task(void* novars){
             case 'j':  //Left Puff Hard  -> Cast speed decrease
                 rod_CASTstart_move_params.accel = constrain((rod_CASTstart_move_params.accel - 1000), rod_acc_decc_min, rod_acc_decc_max);
                 rod_CASTstart_move_params.decel = constrain((rod_CASTstart_move_params.decel - 1000), rod_acc_decc_min, rod_acc_decc_max);
+                printf("Cast Speed: %i\n", rod_CASTstart_move_params.accel);
+
                 break;
 
             case 'k':  //Left Puff Soft
@@ -275,6 +266,8 @@ void control_comm_task(void* novars){
 
             case 'm':  //Left Sip Hard  -> Release position retard.
                 rod_cast_release_pos = constrain((rod_cast_release_pos+5),rod_MIN_pos,rod_MAX_pos);
+                printf("Cast Release: %i\n", rod_cast_release_pos);
+
                 break;
 
             case 'n':  //Left Sip Soft
@@ -290,93 +283,29 @@ void control_comm_task(void* novars){
                 break;
 
             case 'l':  //Joystick left: Move rod forward.
-                roboclaw.DutyM1(roboclaw_addr, -rod_slew_pwm_value);
+//                roboclaw.DutyM1(roboclaw_addr, -rod_slew_pwm_value);
+//                manualmove = 1;  //Flag to prevent other control loop moves from being screwed with
                 break;
 
             case 'r':  //Joystick right: Move rod backwards.
-                roboclaw.DutyM1(roboclaw_addr, rod_slew_pwm_value);
+//                roboclaw.DutyM1(roboclaw_addr, rod_slew_pwm_value);
+//                manualmove = 1;  //Flag to prevent other control loop moves from being screwed with
                 break;
 
             case 'p':  //Lip switch:  Positive test for cast.
                 break;
 
-/** Below is old testing code for practice casting and other controls
 
-            case 'a': // Go to cast start
-                printf("Destination: %i \n", rod_cast_begin_pos);
-                goto_rod_position(&rod_slow_move_params, rod_cast_begin_pos,1,1);
-                break;
-
-            case 's': // Go to cast release location
-                printf("Destination: %i \n", rod_cast_release_pos);
-                goto_rod_position(&rod_slow_move_params, rod_cast_release_pos,1,1);
-                break;
-            case 'd': // Go to cast finish location
-                printf("Destination: %i \n", rod_cast_finish_pos);
-                goto_rod_position(&rod_slow_move_params, rod_cast_finish_pos,1,1);
-                //goto_rod_position(&rod_CAST_move_params, rod_cast_finish_pos);
-                break;
-
-            case 'p': // Cast, with second check of 'y'
-                if(abs(AMT20_abs_position - rod_cast_begin_pos) <= 100) {
-                    do {
-                        inchar = getchar();
-                    } while (inchar == EOF);
-
-                    if (inchar == 'z') {
-                        printf("Casting!\n\n");
-                        fishing_rod_cast_sequence();
-                    } else {
-                        printf("Wrong sequence, no cast! \n\n");
-                    }
-                }
-                else printf("Not in cast start position,  no cast! \n\n");
-
-                break;
-
-
-
-            case 'u': //Reel for 30ms?
-                roboclaw.DutyM2(roboclaw_addr, reel_pwm_drive);
-                break;
-
-            case 'q': //Advanced cast release 5 counts
-                rod_cast_release_pos += 5;
-                printf("Cast Release: %i\n", rod_cast_release_pos);
-                break;
-
-            case 'w': //Retard cast release 5 counts
-                rod_cast_release_pos -= 5;
-                printf("Cast Release: %i\n", rod_cast_release_pos);
-                break;
-            case 'n': //Advanced accell 1000 qpps
-                rod_CASTstart_move_params.accel += 1000;
-                rod_CASTstart_move_params.decel += 1000;
-                printf("Cast Accel: %i\n", rod_CASTstart_move_params.accel);
-                break;
-
-            case 'm': //Deccel 1000 qpps
-                rod_CASTstart_move_params.accel -= 1000;
-                rod_CASTstart_move_params.decel -= 1000;
-                printf("Cast Accel: %i\n", rod_CASTstart_move_params.accel);
-                break;
-            case 'z':  //Roboclaw energency stop?
-            case 'x':
-            case ' ':
-
-
-
-
-**/
             default:
                 roboclaw.DutyM2(roboclaw_addr, 0);
-//                roboclaw.DutyM1(roboclaw_addr, 0);
+//                if(manualmove){ roboclaw.DutyM1(roboclaw_addr, 0);}
+//                else manualmove = 0;
                 gpio_set_level(solenoid_gpio_pin,1);
                 break;
 
         }
 
-        vTaskDelay(30 / portTICK_PERIOD_MS); //Sleep thread for 30ms
+        vTaskDelay(comm_loop_delay / portTICK_PERIOD_MS); //Sleep thread for 30ms
 
     }
 
@@ -449,7 +378,7 @@ int fishStateMachine(int key, int state){
     int nextstate = 0;
     int exitwait = 0;
     int cc;
-    static const char* TAG = "FSM";
+    static const char* subTAG = "FSM";
 
 
 //    printf("FSkey: %c  FSstate: %i \n", key,state);
@@ -579,7 +508,7 @@ int fishStateMachine(int key, int state){
     }
     else {printf("Fish Stat Machine no case \n");} //Do nothing, however shouldnt reach here.
 
-    ESP_LOGI(TAG,"CurrentState: %i, NextState: %i",state, nextstate);
+    ESP_LOGI(subTAG,"CurrentState: %i, NextState: %i",state, nextstate);
 
     return nextstate;
 
