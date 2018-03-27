@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 #include <esp_log.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -90,6 +91,16 @@ rod_control_params_t rod_CASTstart_move_params ={10000, 40, 80000, 1000, 20, rod
 void fishing_rod_cast_sequence();
 void goto_rod_position(rod_control_params_t* params, int16_t destination, boolean override_current_move = true, boolean update_params = true);
 
+int get_inputchar(){
+    int cc;
+    do {
+        cc = getchar();
+        vTaskDelay(5/portTICK_PERIOD_MS);
+    } while (cc == EOF);
+
+    return cc;
+}
+
 void sync_encoders(){
     AMT20_abs_position = Aencoder.readEncoderPosition();
     esp_quadenc_position = AMT20_abs_position;
@@ -107,8 +118,9 @@ void print_encoder_info(){
 
     printf("Abs. Pos: %i \t\t", AMT20_abs_position);
     printf("Quad Pos: %i \t\t", esp_quadenc_position);
-//    printf("Roboclaw Quad: %i \t\t", roboclaw_position);
+    printf("Roboclaw Quad: %i \t\t", roboclaw_position);
 //    printf("RC Flag: %i  RC Status: %i \n", RC_valid_flag,RC_status);
+    printf("\n");
 
 }
 
@@ -186,12 +198,20 @@ void control_comm_task(void* novars){
         int inchar = 0;
         inchar = getchar();
         if (inchar != EOF) {
-            printf("You sent: %c\n", inchar);
+            printf("%c - ", inchar);
+//            printf("You sent: %c\n", inchar);
         }
 
         switch (inchar) {
             /** Setup and control cases **/
-            case '?':
+            case ' ': //STOP all motor functions!
+                roboclaw.DutyM1(roboclaw_addr, 0);
+                ets_delay_us(200);
+                roboclaw.DutyM2(roboclaw_addr, 0);
+                printf("\n\nSTOPPING!!\n\n");
+                break;
+
+            case '?':  //Print help text
                 printf(fishp_help);
                 break;
 
@@ -201,21 +221,25 @@ void control_comm_task(void* novars){
 
             case 't':  //Re-sycronize encoders to abs value.
                 sync_encoders();
-                ets_delay_us(100);
+                ets_delay_us(5000);
                 print_encoder_info();
                 fishstate = 2;
                 break;
 
             case '|':  //Set encoder zero, and sync encoders: NOTE Should be rod straight down.
                 Aencoder.setEncoderZero();
-                ets_delay_us(5000);
+                ets_delay_us(10000);
                 sync_encoders();
-                ets_delay_us(5000);
+                ets_delay_us(10000);
                 print_encoder_info();
                 break;
 
             case '=': //Fire solenoid for 30 ms, hold for longer
                 gpio_set_level(solenoid_gpio_pin,0);
+                break;
+
+            case ':': //Reset start and finish locations
+
                 break;
 
                 ///Quadstick Mappings: See control document Fishing_Controls_StatMachine_dd.txt for other controls
@@ -237,7 +261,7 @@ void control_comm_task(void* novars){
             case 'f':  //Right Puff Hard  -> Cast speed increase
                 rod_CASTstart_move_params.accel = constrain((rod_CASTstart_move_params.accel + 1000), rod_acc_decc_min, rod_acc_decc_max);
                 rod_CASTstart_move_params.decel = constrain((rod_CASTstart_move_params.decel + 1000), rod_acc_decc_min, rod_acc_decc_max);
-                printf("Cast Speed: %i\n", rod_CASTstart_move_params.accel);
+                printf("New cast speed: %i\n", rod_CASTstart_move_params.accel);
 
                 break;
 
@@ -246,7 +270,7 @@ void control_comm_task(void* novars){
 
             case 'h':  //Right Sip Hard   -> Release Advanced
                 rod_cast_release_pos = constrain((rod_cast_release_pos-5),rod_MIN_pos,rod_MAX_pos);
-                printf("Cast Release: %i\n", rod_cast_release_pos);
+                printf("New cast release position: %i\n", rod_cast_release_pos);
 
                 break;
 
@@ -257,7 +281,7 @@ void control_comm_task(void* novars){
             case 'j':  //Left Puff Hard  -> Cast speed decrease
                 rod_CASTstart_move_params.accel = constrain((rod_CASTstart_move_params.accel - 1000), rod_acc_decc_min, rod_acc_decc_max);
                 rod_CASTstart_move_params.decel = constrain((rod_CASTstart_move_params.decel - 1000), rod_acc_decc_min, rod_acc_decc_max);
-                printf("Cast Speed: %i\n", rod_CASTstart_move_params.accel);
+                printf("New cast speed: %i\n", rod_CASTstart_move_params.accel);
 
                 break;
 
@@ -266,7 +290,7 @@ void control_comm_task(void* novars){
 
             case 'm':  //Left Sip Hard  -> Release position retard.
                 rod_cast_release_pos = constrain((rod_cast_release_pos+5),rod_MIN_pos,rod_MAX_pos);
-                printf("Cast Release: %i\n", rod_cast_release_pos);
+                printf("New cast release position: %i\n", rod_cast_release_pos);
 
                 break;
 
@@ -288,7 +312,7 @@ void control_comm_task(void* novars){
                 break;
 
             case 'r':  //Joystick right: Move rod backwards.
-//                roboclaw.DutyM1(roboclaw_addr, rod_slew_pwm_value);
+                roboclaw.DutyM1(roboclaw_addr, rod_slew_pwm_value);
 //                manualmove = 1;  //Flag to prevent other control loop moves from being screwed with
                 break;
 
@@ -353,8 +377,8 @@ void fishing_rod_cast_sequence(){
 //    goto_rod_position(&rod_CASTfinish_move_params,rod_cast_finish_pos,1,1);  //Start Casting
     goto_rod_position(&rod_slow_move_params,rod_cast_finish_pos,0,1);  //Start Casting
     vTaskDelay(1000/portTICK_PERIOD_MS);
-    printf("Speed(cps): %i\n",M1speed);  //Test release speed printout
-    printf("Dur(us): %i\n",static_cast<uint32_t>(cast_duration_timer));
+//    printf("Speed(cps): %i\n",M1speed);  //Test release speed printout
+//    printf("Dur(us): %i\n",static_cast<uint32_t>(cast_duration_timer));
 }
 
 void IRAM_ATTR AMT20enc_isr_handler(void* args){
@@ -379,6 +403,9 @@ int fishStateMachine(int key, int state){
     int exitwait = 0;
     int cc;
     static const char* subTAG = "FSM";
+    char nextstate_text[25];
+    char astate_text[25];
+    char cstate_text[25];
 
 
 //    printf("FSkey: %c  FSstate: %i \n", key,state);
@@ -386,78 +413,66 @@ int fishStateMachine(int key, int state){
     if(key == 'a'){
 //        Serial.print("Puff Advance");
         switch(state){
-            case 2: //Precast, retrieve complete
+            case 2: //Neutral go to cast start
                 nextstate = 8;
-//                Serial.println("Puff, 2");
-//                myRod.gotoPosition(caststart, accel, decel, velmax,0,1);
+                strcpy(nextstate_text, "CAST START");
+                strcpy(astate_text, "CAST!!");
+                strcpy(cstate_text, "NEUTRAL");
+
                 goto_rod_position(&rod_slow_move_params,rod_cast_begin_pos,1,1);
                 break;
 
-            case 8: //Cast start
+            case 8: //Cast start, cast if success, go to retrieve
 
-                if(abs(AMT20_abs_position - rod_cast_begin_pos) <= 500) {
+                if(abs(Aencoder.readEncoderPosition() - rod_cast_begin_pos) <= 30) {
                     printf("Hit 'p', lip switch to cast, any other to cancel\n");
-                    do {
-                        cc = getchar();
-                    } while (cc == EOF);
+//                    do {
+//                        cc = getchar();
+//                    } while (cc == EOF);
+                    cc = get_inputchar();
 
                     if (cc == 'p') {
-                        printf("\nCasting!\n");
+                        printf("\n\nCASTING!!!!!!!\n\n");
                         nextstate = 4;
+                        strcpy(nextstate_text, "RETRIEVE");
+                        strcpy(astate_text, "NEUTRAL");
+                        strcpy(cstate_text, "HOOK");
                         fishing_rod_cast_sequence();
+                        break;
                     } else {
                         nextstate = 8;
-                        printf("\nWrong sequence, no cast! \n\n");
+                        printf("\nWrong confirmation, no cast! Stay in CAST START\n\n");
                     }
                 }
                 else{
+                    nextstate = 8;
                     printf("Not in cast start position, re-sync with 't'! \n");
-                    printf("Start location should be: %i give or take 30.\n", rod_cast_begin_pos);
+                    printf("Start location should be: %i and is currently %i +/-30\n", rod_cast_begin_pos,Aencoder.readEncoderPosition());
                 }
+                strcpy(nextstate_text, "CAST START");
+                strcpy(astate_text, "CAST!!!");
+                strcpy(cstate_text, "NEUTRAL");
                 break;
 
-//                Serial.println("Puff, 8");
-//                //Cast here;
-////				myRod.gotoPosition(castfinish, accel, decel, velmax,0,1);
-////
-//                Serial.print(F("Hit lip switch to cast"));
-//                while (!exitwait) {
-//                    if (Serial.available()) {
-//                        cc = Serial.read();
-//                        if (cc == 'p' && myRod.isEncoderSafe()) {
-//                            Serial.println("CASTING!!!!!");
-//                            nextstate = 4;
-//                            CAST(castacc, castdec, castspeed);
-//                            cursp = myRod.getPositionCurrent();
-//
-//
-//                        } else {
-//                            nextstate = 8;
-//                            Serial.println(F("Encoder not safe! NO CAST"));
-//                            Serial.print(F("EnVal = "));
-//                            Serial.println(myRod.isEncoderSafe());
-//                            Serial.println(cc);
-//                        }
-//                        exitwait = 1;
-//                    }
-//                }
-//                break;
-
-            case 4:  //Cast complete, retreive position
+            case 4:  //Retrieve, go to neutral
                 nextstate = 2;
-//                Serial.println("Sip, 4");
-//                myRod.gotoPosition(reelfinish, accel, decel, velmax,0,1);
+                strcpy(nextstate_text, "NEUTRAL");
+                strcpy(astate_text, "CAST START");
+                strcpy(cstate_text, "RETRIEVE");
+
                 goto_rod_position(&rod_slow_move_params,rod_neutral_pos,1,1);
                 break;
 
-            case 11: //Hook position
+            case 11: //Hook position go to neutral
                 nextstate = 2;
-//                Serial.println("Puff, 11");
-//                myRod.gotoPosition(reelfinish, accel, decel, velmax,0,1);
+                strcpy(nextstate_text, "NEUTRAL");
+                strcpy(astate_text, "CAST START");
+                strcpy(cstate_text, "RETRIEVE");
+
                 goto_rod_position(&rod_slow_move_params,rod_neutral_pos,1,1);
                 break;
             case 0:
-                printf("State is 0, you haven't synced encoders\n");
+                printf("State is 0, you haven't synced encoders, press 't'\n");
                 break;
 
             default:
@@ -467,38 +482,43 @@ int fishStateMachine(int key, int state){
     else if (key == 'c'){
         Serial.println("Sip Return");
         switch(state){
-            case 2: //Precast, retrieve complete
+            case 2: //Neutral, go to retrieve
                 nextstate = 4;
-//                Serial.println("Sip, 2");
-//                myRod.gotoPosition(castfinish, accel, decel, velmax,0,1);
+                strcpy(nextstate_text, "RETRIEVE");
+                strcpy(astate_text, "NEUTRAL");
+                strcpy(cstate_text, "HOOK!");
+
                 goto_rod_position(&rod_slow_move_params,rod_cast_finish_pos,1,1);
                 break;
 
-            case 8: //Cast start
+            case 8: //Cast start, go to neutral
                 nextstate = 2;
-//                Serial.println("Sip, 8");
-//                myRod.gotoPosition(reelfinish, accel, decel, velmax,0,1);
+                strcpy(nextstate_text, "NEUTRAL");
+                strcpy(astate_text, "CAST START");
+                strcpy(cstate_text, "RETRIEVE");
+
                 goto_rod_position(&rod_slow_move_params,rod_neutral_pos,1,1);
                 break;
 
-            case 4:  //Hook!
-//                Serial.println("Sip, 4");
+            case 4:  //Retrieve go to HOOK!
                 nextstate = 11;
-                //Hook here more violently
-//                myRod.gotoPosition(hooklocation,10,10, 15,0,0);
-////				myRod.gotoPosition(hooklocation, accel, decel, velmax,0,1);
-//                myRod.setMotorPWM(Brake,1023);
+                strcpy(nextstate_text, "HOOK!");
+                strcpy(astate_text, "NEUTRAL");
+                strcpy(cstate_text, "RETRIEVE");
+
                 goto_rod_position(&rod_CASTstart_move_params,rod_hook_pos,1,1);
                 break;
 
-            case 11: //Hook position
+            case 11: //Hook position go to retrieve
                 nextstate = 4;
-//                Serial.println("Sip, 11");
-//                myRod.gotoPosition(castfinish, accel, decel, velmax,0,1);
+                strcpy(nextstate_text, "RETRIEVE");
+                strcpy(astate_text, "NEUTRAL");
+                strcpy(cstate_text, "HOOK!");
+
                 goto_rod_position(&rod_slow_move_params,rod_cast_finish_pos,1,1);
                 break;
             case 0:
-                printf("State is 0, you haven't synced encoders\n");
+                printf("State is 0, you haven't synced encoders, press 't'\n");
                 break;
 
             default:
@@ -506,9 +526,16 @@ int fishStateMachine(int key, int state){
         }
 
     }
-    else {printf("Fish Stat Machine no case \n");} //Do nothing, however shouldnt reach here.
+    else {printf("ERROR: Fish Stat Machine no case \n");} //Do nothing, however shouldnt reach here.
 
-    ESP_LOGI(subTAG,"CurrentState: %i, NextState: %i",state, nextstate);
+//    ESP_LOGI(subTAG,"CurrentState: %i, NextState: %i",state, nextstate);
+    printf("  Going to state: ");
+    printf(nextstate_text);
+    printf(", 'a' will then take you to: ");
+    printf(astate_text);
+    printf(", 'c' will take you to: ");
+    printf(cstate_text);
+    printf(". \n\n");
 
     return nextstate;
 

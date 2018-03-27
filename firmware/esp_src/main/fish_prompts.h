@@ -25,12 +25,17 @@ const static char* fishp_intro = "\n\nThis is the beta software for the CH_Fishi
 
 const static char* fishp_help =
       " \n\nFISHINATOR CONTROL COMMANDS\n"
-            "------------------------------------------------------------\n"
+            "--------------------------------------------------------------------------------------\n"
+            " 'SPACE'- EMERGENCY STOP\n"
             " '?' - Print this help text\n"
             " 'y' - Print all three encoder current values\n"
             " 't' - SYNC: Set Quad encoders equal to absolute encoder.\n"
             " '|' - Reset zero for absolute encoder: !!!CAREFUL!!!\n"
+            " ':' - Reset cast start and release posisitions: Follow prompts!\n"
+            "\n"
             " '=' - Test Solenoid - Hold key to hold solenoid active\n"
+            " 'u' - Reel at full speed - JOYSTICK UP\n"
+            " 'd' - Reel at half speed - JOYSTICK DOWN\n"
             "\n"
             " 'a' - Adv. to next state - CENTER PUFF HARD \n"
             " 'c' - Ret. to prev. state - CENTER SIP HARD \n"
@@ -39,7 +44,16 @@ const static char* fishp_help =
             " 'h' - Release +5 counts later.   ~10 counts per degree - RIGHT SIP \n"
             " 'm' - Release -5 counts earlier. ~10 counts per degree - LEFT SIP \n"
             " 'p' - Confirm CAST, after 'a' to start cast - LIP SWITCH \n"
-            "\t NOTE: If sequence successful, WILL CAST IMMEDIATELY\n"
+            "\t NOTE: IF SEQUENCE IS CORRECT, IT WILL CAST IMMEDIATELY!\n"
+            "\n"
+            " There are 4 states in the Fishing state machine:\n"
+            "\tNeutral: 2 o'clock\n"
+            "\tCast Start: 8 o'clock\n"
+            "\tRetrieve: 4 o'clock\n"
+            "\tHook: 12 o'clock\n"
+            "\n"
+            "Refer to drawings for the control flow. Reminders will print when a terminal is open.\n"
+            "--------------------------------------------------------------------------------------\n"
             "\n\n";
 
 #endif //CH_FISHINATOR_ESP_FISH_PROMPTS_H
