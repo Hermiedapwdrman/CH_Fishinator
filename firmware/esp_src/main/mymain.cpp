@@ -48,13 +48,13 @@ RoboClaw roboclaw(&HWSerial,10000);
 
 
 /**Fishing rod position variables **/
-int32_t rod_cast_start_pos = 3300;
+int32_t rod_cast_start_pos = 3050;
 int32_t rod_cast_release_pos = 2300;
 int32_t rod_cast_retrieve_pos = 1000;
 const int32_t rod_hook_pos = 2000;
 const int32_t rod_neutral_pos = 1500;
 const int32_t rod_MAX_pos = 3400;
-const int32_t rod_MIN_pos = 850;
+const int32_t rod_MIN_pos = 500;
 
 const int32_t reel_pwm_drive = 0x4000;
 const int32_t reel_pwm_drive_slow = 0x2000;
@@ -182,6 +182,7 @@ extern "C" void app_main()
 
 
     //System Init should be complete: Print welcome:
+    printf(fishp_splash);
     printf(fishp_intro);
     printf("Version: %i.%i-%i\n\n",FISH_MAJOR_REV,FISH_MINOR_REV,FISH_DATE_REV);
     printf(fishp_help);
@@ -217,6 +218,7 @@ void control_comm_task(void* novars){
 
             case '?':  //Print help text
                 printf(fishp_help);
+                printf("\nCURRENT STATE: %i\n\n",fishstate);
                 break;
 
             case 'y':  //Print each encoder value
@@ -242,6 +244,8 @@ void control_comm_task(void* novars){
                     ets_delay_us(10000);
                     print_encoder_info();
                 }
+                else printf(" - Cancel!\n");
+
                 printf(" \n");
                 break;
 
@@ -260,7 +264,8 @@ void control_comm_task(void* novars){
                     rod_cast_start_pos = Aencoder.readEncoderPosition();
                     printf("\nNew CAST START location = %i\n",rod_cast_start_pos);
                 }
-                printf("Position the rod in the RETRIEVE location and press 'y', press any other key to skip: ");
+                else printf(" - SKIP!\n");
+                printf("\nPosition the rod in the RETRIEVE location and press 'y', press any other key to skip: ");
                 inchar = get_inputchar();
                 putchar(inchar);
                 if(inchar == 'y'){
@@ -269,6 +274,7 @@ void control_comm_task(void* novars){
                     rod_cast_retrieve_pos = Aencoder.readEncoderPosition();
                     printf("\nNew RETRIEVE location = %i\n",rod_cast_retrieve_pos);
                 }
+                else printf(" - SKIP!\n");
 
                 break;
 

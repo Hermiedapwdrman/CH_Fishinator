@@ -18,8 +18,16 @@
 #define FISH_MINOR_REV 2
 #define FISH_DATE_REV 180327
 
+const static char* fishp_splash ="\n"
+      "  ______ __  __ ______     ______ ____ _____  __  __ ____ _   __ ___   ______ ____   ____ \n"
+      " /_  __// / / // ____/    / ____//  _// ___/ / / / //  _// | / //   | /_  __// __ \\ / __ \\\n"
+      "  / /  / /_/ // __/      / /_    / /  \\__ \\ / /_/ / / / /  |/ // /| |  / /  / / / // /_/ /\n"
+      " / /  / __  // /___     / __/  _/ /  ___/ // __  /_/ / / /|  // ___ | / /  / /_/ // _, _/ \n"
+      "/_/  /_/ /_//_____/    /_/    /___/ /____//_/ /_//___//_/ |_//_/  |_|/_/   \\____//_/ |_|  \n"
+      "                                                                                          ";
 
-const static char* fishp_intro = "\n\nThis is the beta software for the CH_Fishinator.\n"
+
+const static char* fishp_intro = "\nThis is the beta software for the CH_Fishinator system.\n"
     "\t This software is to be controlled via serial terminal with the on board keyboard or with a quadstick.\n\n";
 
 
@@ -28,6 +36,7 @@ const static char* fishp_intro = "\n\nThis is the beta software for the CH_Fishi
 const static char* fishp_help =
       " \n\nFISHINATOR CONTROL COMMANDS\n"
             "--------------------------------------------------------------------------------------\n"
+            " 'CNTL-]' - To exit the termimal, 'make monitor' to reconnect"
             " 'SPACE'- EMERGENCY STOP\n"
             " '?' - Print this help text\n"
             " 'y' - Print all three encoder current values\n"
