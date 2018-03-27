@@ -183,7 +183,7 @@ extern "C" void app_main()
 
     //System Init should be complete: Print welcome:
     printf(fishp_intro);
-    printf("Version: %i.%i\n\n",FISH_MAJOR_REV,FISH_MINOR_REV);
+    printf("Version: %i.%i-%i\n\n",FISH_MAJOR_REV,FISH_MINOR_REV,FISH_DATE_REV);
     printf(fishp_help);
 //    esp_log_write(ESP_LOG_INFO,TAG,fishp_intro); //Should not be used according to the library, use log macro.
 //    ESP_LOGI(TAG,fishp_test);

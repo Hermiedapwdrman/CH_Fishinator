@@ -16,9 +16,11 @@
 //#define fishp_test "simple test \n\n\n\n"   //Must use macro if using logging software.
 #define FISH_MAJOR_REV 0
 #define FISH_MINOR_REV 2
+#define FISH_DATE_REV 180327
 
 
-const static char* fishp_intro = "\n\nThis is the beta software for the CH_Fishinator, build March 2018.\n\n";
+const static char* fishp_intro = "\n\nThis is the beta software for the CH_Fishinator.\n"
+    "\t This software is to be controlled via serial terminal with the on board keyboard or with a quadstick.\n\n";
 
 
 
