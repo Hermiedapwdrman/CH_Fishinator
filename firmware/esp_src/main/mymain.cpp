@@ -199,7 +199,7 @@ extern "C" void app_main()
 
 void control_comm_task(void* novars){
 
-    while(1) {
+    while(true) {
         int inchar = 0;
         inchar = getchar();
         if (inchar != EOF) {
@@ -229,6 +229,7 @@ void control_comm_task(void* novars){
                 break;
 
             case 't':  //Re-sycronize encoders to abs value.
+            case 'e': //Center Sip Soft
                 sync_encoders();
                 ets_delay_us(5000);
                 print_encoder_info();
@@ -293,8 +294,8 @@ void control_comm_task(void* novars){
                 fishstate = fishStateMachine(inchar, fishstate);
                 break;
 
-            case 'e':  //Center Sip Soft
-                break;
+//            case 'e':  //Center Sip Soft  IMPLEMENTED ABOVE
+//                break;
 
                 /// Right SNP keymap
             case 'f':  //Right Puff Hard  -> Cast speed increase
@@ -488,13 +489,13 @@ int fishStateMachine(int key, int state){
             case 8: //Cast start, cast if success, go to retrieve
                 sync_encoders();
                 if(abs(rod_cast_start_pos - rod_cast_start_pos) <= 30) {
-                    printf("Hit 'p', lip switch to cast, any other to cancel\n");
+                    printf("Hit 'b'or 'p', CENTER PUFF SOFT or LIP SWITCH to cast, any other to cancel\n");
 //                    do {
 //                        cc = getchar();
 //                    } while (cc == EOF);
                     cc = get_inputchar();
 
-                    if (cc == 'p') {
+                    if (cc == 'b' || cc == 'p') {
                         printf("\n\nCASTING!!!!!!!\n\n");
                         nextstate = 4;
                         strcpy(nextstate_text, "RETRIEVE");
