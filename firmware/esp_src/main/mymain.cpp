@@ -12,8 +12,13 @@
 #include <string.h>
 #include <strings.h>
 #include <esp_log.h>
+#include <esp_system.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+
+//NVS flash api includes.
+#include <nvs_flash.h>
+#include <nvs.h>
 
 //Arduino specific includes.
 #include <Arduino.h>
@@ -27,9 +32,6 @@
 #include "fish_prompts.h"
 static const char* TAG = "Fishinator";
 
-//Control and utility functions, mostly attached as tasks/threads to the RTOS scheduler.
-uint32_t comm_loop_delay = 20; //in msecs.  Determines reel behavior, test solenoid behavior
-void control_comm_task(void* novars); //Monitor incoming com task
 
 
 /** Encoder Setup **/
@@ -92,15 +94,6 @@ rod_control_params_t rod_CASTstart_move_params ={10000, 40, 80000, 1000, 20, rod
 void fishing_rod_cast_sequence();
 void goto_rod_position(rod_control_params_t* params, int16_t destination, boolean override_current_move = true, boolean update_params = true);
 
-int get_inputchar(){
-    int cc;
-    do {
-        cc = getchar();
-        vTaskDelay(5/portTICK_PERIOD_MS);
-    } while (cc == EOF);
-
-    return cc;
-}
 
 void sync_encoders(){
     AMT20_abs_position = Aencoder.readEncoderPosition();
@@ -136,6 +129,61 @@ const gpio_config_t Solenoid_GPIOconfig{ //Define Encoder B behavior, pin select
       .intr_type = GPIO_INTR_DISABLE
 };
 
+/** Utility functions and inits
+ *
+ *  This includes some user input functions as well as an simple NVS storage implementation for storing casing params.
+ */
+uint32_t comm_loop_delay = 20; //in msecs.  Determines reel behavior, test solenoid behavior
+void control_comm_task(void* novars); //Monitor incoming com task
+
+void fish_nvs_storevals_task(void* novars);
+nvs_handle my_nvs_handle;
+const char * nvs_cast_start = "nvs_cast_start";  //Redundant?
+const char * nvs_retrieve = "nvs_retrieve";
+const char * nvs_release = "nvs_release";
+
+int get_inputchar(){
+    int cc;
+    do {
+        cc = getchar();
+        vTaskDelay(5/portTICK_PERIOD_MS);
+    } while (cc == EOF);
+
+    return cc;
+}
+
+esp_err_t fish_nvs_write(){
+
+    esp_err_t err;
+    err = nvs_set_i32(my_nvs_handle,nvs_cast_start,rod_cast_start_pos);
+    printf((err != ESP_OK) ? "wCS NVS Failed!\n" : "+");
+    err = nvs_set_i32(my_nvs_handle,nvs_retrieve,rod_cast_retrieve_pos);
+    printf((err != ESP_OK) ? "wRET NVS Failed!\n" : ".");
+    err = nvs_set_i32(my_nvs_handle,nvs_release,rod_cast_release_pos);
+    printf((err != ESP_OK) ? "wREL NVS Failed!\n" : "+\n");
+
+    err = nvs_commit(my_nvs_handle);
+    printf((err != ESP_OK) ? "wFailed!\n" : "wDone\n");
+
+    return err;
+
+};
+
+esp_err_t fish_nvs_read(){
+
+    esp_err_t err = 0;
+    err = nvs_get_i32(my_nvs_handle,nvs_cast_start,&rod_cast_start_pos);
+    printf((err != ESP_OK) ? "rCS NVS Failed!\n" : ".");
+    err = nvs_get_i32(my_nvs_handle,nvs_retrieve,&rod_cast_retrieve_pos);
+    printf((err != ESP_OK) ? "rRET NVS Failed!\n" : "+");
+    err = nvs_get_i32(my_nvs_handle,nvs_release,&rod_cast_release_pos);
+    printf((err != ESP_OK) ? "rREL NVS Failed!\n" : ".\n");
+
+    return err;
+
+};
+
+
 
 /**
  * IDF main function with used in conjuction with arduino libraries.
@@ -164,6 +212,24 @@ extern "C" void app_main()
     roboclaw.DutyM1(roboclaw_addr,0);
     roboclaw.DutyM2(roboclaw_addr,0);
 
+    // Initialize NVS
+    esp_err_t err = nvs_flash_init();
+    if (err == ESP_ERR_NVS_NO_FREE_PAGES) {
+        // NVS partition was truncated and needs to be erased
+        // Retry nvs_flash_init
+        ESP_ERROR_CHECK(nvs_flash_erase());
+        err = nvs_flash_init();
+    }
+    ESP_ERROR_CHECK( err );
+
+    //Open NVS
+    err = nvs_open("fishinator", NVS_READWRITE, &my_nvs_handle);
+    if (err != ESP_OK) {
+        printf("Error (%s) opening NVS handle!\n", esp_err_to_name(err));
+    } else {
+        printf("NVS Opened\n");
+    }
+
 
     //Read abs encoder position and update
     do{
@@ -181,23 +247,33 @@ extern "C" void app_main()
     ets_delay_us(2000);
 
 
-    //System Init should be complete: Print welcome:
+    //System Init should be complete: Print welcome:===============
     printf(fishp_splash);
     printf(fishp_intro);
     printf("Version: %i.%i-%i\n\n",FISH_MAJOR_REV,FISH_MINOR_REV,FISH_DATE_REV);
     printf(fishp_help);
-//    esp_log_write(ESP_LOG_INFO,TAG,fishp_intro); //Should not be used according to the library, use log macro.
-//    ESP_LOGI(TAG,fishp_test);
 
     /// Create threads to handle program tasks.
 //    xTaskCreatePinnedToCore(&print_task, "print_task",configMINIMAL_STACK_SIZE,NULL,5,NULL,1);
-    xTaskCreate(&control_comm_task, "Comm task",8192,NULL, 2,NULL);
-//    xTaskCreate(&spi_AMT_encoder_task,"Encoder Task",8192,NULL,5,NULL);
+//    xTaskCreate(&fish_nvs_storevals_task, "NVS task",8192,NULL, 6,NULL);
+    xTaskCreate(&control_comm_task, "Comm task",8192,NULL, 5,NULL);
+
 
 }
 
+//void fish_nvs_storevals_task(void* novars){
+//
+////    esp_err_t err = fish_nvs_write();
+////    printf(".+");
+//    while(true) {
+//        printf(".+");
+//        vTaskDelay(3000 / portTICK_PERIOD_MS);
+//    }
+//}
+
 
 void control_comm_task(void* novars){
+    static int32_t state_debounce_counter = 0;  // Debounce counter for state machine transisition, to keep from advancing too quickly.
 
     while(true) {
         int inchar = 0;
@@ -229,7 +305,8 @@ void control_comm_task(void* novars){
                 break;
 
             case 't':  //Re-sycronize encoders to abs value.
-            case 'e': //Center Sip Soft
+                fish_nvs_read();
+                ets_delay_us(1000);
                 sync_encoders();
                 ets_delay_us(5000);
                 print_encoder_info();
@@ -255,6 +332,7 @@ void control_comm_task(void* novars){
 
             case '=': //Fire solenoid for 30 ms, hold for longer
                 gpio_set_level(solenoid_gpio_pin,0);
+                vTaskDelay(30);
                 break;
 
             case ':': //Reset start and finish locations manually
@@ -280,27 +358,33 @@ void control_comm_task(void* novars){
                 }
                 else printf(" - SKIP!\n");
 
+                printf("\n\n Saving cast start, retrieve and release to non-volitile storage \n\n");
+                fish_nvs_write(); //Save new values to NV flash.
+
                 break;
 
                 ///Quadstick Mappings: See control document Fishing_Controls_StatMachine_dd.txt for other controls
                 /// Center SNP keymap
             case 'a':  //Center Puff Hard ->  Advance one state
-                fishstate = fishStateMachine(inchar, fishstate);
+            case 'c':  //Center Sip Hard  ->  Retard one state
+                if(state_debounce_counter <=0){
+                    state_debounce_counter = 10;  //Delay this * comm_loop_delay msecs.
+                    fishstate = fishStateMachine(inchar, fishstate);
+                }
+                else printf("Debounce state - You can only change state every 0.5 seconds.\n");
+
                 break;
 
             case 'b':  //Center Puff Soft
                 break;
-            case 'c':  //Center Sip Hard  ->  Retard one state
-                fishstate = fishStateMachine(inchar, fishstate);
+
+            case 'e':  //Center Sip Soft  IMPLEMENTED ABOVE
                 break;
 
-//            case 'e':  //Center Sip Soft  IMPLEMENTED ABOVE
-//                break;
-
                 /// Right SNP keymap
-            case 'f':  //Right Puff Hard  -> Cast speed increase
-                rod_CASTstart_move_params.accel = constrain((rod_CASTstart_move_params.accel + 1000), rod_acc_decc_min, rod_acc_decc_max);
-                rod_CASTstart_move_params.decel = constrain((rod_CASTstart_move_params.decel + 1000), rod_acc_decc_min, rod_acc_decc_max);
+            case 'f':  //Right Puff Hard  -> Cast speed decrease
+                rod_CASTstart_move_params.accel = constrain((rod_CASTstart_move_params.accel - 1000), rod_acc_decc_min, rod_acc_decc_max);
+                rod_CASTstart_move_params.decel = constrain((rod_CASTstart_move_params.decel - 1000), rod_acc_decc_min, rod_acc_decc_max);
                 printf("New cast speed: %i\n", rod_CASTstart_move_params.accel);
 
                 break;
@@ -308,8 +392,8 @@ void control_comm_task(void* novars){
             case 'g':  //Right Puff Soft
                 break;
 
-            case 'h':  //Right Sip Hard   -> Release Advanced
-                rod_cast_release_pos = constrain((rod_cast_release_pos-5),rod_MIN_pos,rod_MAX_pos);
+            case 'h':  //Right Sip Hard   -> Release retard
+                rod_cast_release_pos = constrain((rod_cast_release_pos+5),rod_MIN_pos,rod_MAX_pos);
                 printf("New cast release position: %i\n", rod_cast_release_pos);
 
                 break;
@@ -318,9 +402,9 @@ void control_comm_task(void* novars){
                 break;
 
                 /// Left SNP keymap
-            case 'j':  //Left Puff Hard  -> Cast speed decrease
-                rod_CASTstart_move_params.accel = constrain((rod_CASTstart_move_params.accel - 1000), rod_acc_decc_min, rod_acc_decc_max);
-                rod_CASTstart_move_params.decel = constrain((rod_CASTstart_move_params.decel - 1000), rod_acc_decc_min, rod_acc_decc_max);
+            case 'j':  //Left Puff Hard  -> Cast speed increase
+                rod_CASTstart_move_params.accel = constrain((rod_CASTstart_move_params.accel + 1000), rod_acc_decc_min, rod_acc_decc_max);
+                rod_CASTstart_move_params.decel = constrain((rod_CASTstart_move_params.decel + 1000), rod_acc_decc_min, rod_acc_decc_max);
                 printf("New cast speed: %i\n", rod_CASTstart_move_params.accel);
 
                 break;
@@ -328,8 +412,8 @@ void control_comm_task(void* novars){
             case 'k':  //Left Puff Soft
                 break;
 
-            case 'm':  //Left Sip Hard  -> Release position retard.
-                rod_cast_release_pos = constrain((rod_cast_release_pos+5),rod_MIN_pos,rod_MAX_pos);
+            case 'm':  //Left Sip Hard  -> Release position advance.
+                rod_cast_release_pos = constrain((rod_cast_release_pos - 5),rod_MIN_pos,rod_MAX_pos);
                 printf("New cast release position: %i\n", rod_cast_release_pos);
 
                 break;
@@ -393,6 +477,8 @@ void control_comm_task(void* novars){
 
         }
 
+        (state_debounce_counter <=0)?(state_debounce_counter = 0):state_debounce_counter--; //Decrement debounce or hold at 0;
+
         vTaskDelay(comm_loop_delay / portTICK_PERIOD_MS); //Sleep thread for 30ms
 
     }
@@ -440,7 +526,8 @@ void fishing_rod_cast_sequence(){
     vTaskDelay(1200/portTICK_PERIOD_MS);
 //    goto_rod_position(&rod_CASTfinish_move_params,rod_cast_retrieve_pos,1,1);  //Start Casting
     goto_rod_position(&rod_slow_move_params,rod_cast_retrieve_pos,0,1);  //Start Casting
-    vTaskDelay(1000/portTICK_PERIOD_MS);
+    vTaskDelay(2000/portTICK_PERIOD_MS);
+//    fish_nvs_write();  //Store casting information to nv flash, that way a well tuned cast is preserved.
 //    printf("Speed(cps): %i\n",M1speed);  //Test release speed printout
 //    printf("Dur(us): %i\n",static_cast<uint32_t>(cast_duration_timer));
 }
@@ -575,15 +662,16 @@ int fishStateMachine(int key, int state){
                 strcpy(cstate_text, "RETRIEVE");
 
                 goto_rod_position(&rod_CASTstart_move_params,rod_hook_pos,1,1);
+                vTaskDelay(1500/portTICK_PERIOD_MS);
                 break;
 
             case 11: //Hook position go to retrieve
-                nextstate = 4;
-                strcpy(nextstate_text, "RETRIEVE");
+                nextstate = 11;
+                strcpy(nextstate_text, "HOOK!");
                 strcpy(astate_text, "NEUTRAL");
-                strcpy(cstate_text, "HOOK!");
-
-                goto_rod_position(&rod_slow_move_params,rod_cast_retrieve_pos,1,1);
+                strcpy(cstate_text, "Nothing.");
+                printf( "You must back out of hook with 'a'. Saftey first.\n");
+//                goto_rod_position(&rod_slow_move_params,rod_cast_retrieve_pos,1,1);
                 break;
             case 0:
                 printf("State is 0, you haven't synced encoders, press 't'\n");
@@ -593,6 +681,7 @@ int fishStateMachine(int key, int state){
             default:
                 break;
         }
+
 
     }
     else {printf("ERROR: Fish Stat Machine no case \n");} //Do nothing, however shouldnt reach here.
