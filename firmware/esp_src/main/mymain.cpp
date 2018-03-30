@@ -310,7 +310,7 @@ void control_comm_task(void* novars){
                 sync_encoders();
                 ets_delay_us(5000);
                 print_encoder_info();
-                fishstate = 2;
+                if (fishstate == 0) fishstate = 2;
                 break;
 
             case '|':  //Set encoder zero, and sync encoders: NOTE Should be rod straight down.
@@ -676,6 +676,8 @@ int fishStateMachine(int key, int state){
                 strcpy(astate_text, "NEUTRAL");
                 strcpy(cstate_text, "Nothing.");
                 printf( "You must back out of hook with 'a'. Saftey first.\n");
+                skipprint = 1;
+
 //                goto_rod_position(&rod_slow_move_params,rod_cast_retrieve_pos,1,1);
                 break;
             case 0:
