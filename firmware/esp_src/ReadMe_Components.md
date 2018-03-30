@@ -5,6 +5,8 @@ be included in the **components** directory.  For this template I have chosen to
 libraries in this fashion. This allows for each project to freeze SDKs or libraries at a particular release/commit; or to modify those
 libraries without inducing unwanted changes to other projects.
 
+NOTE: It might be best to update the AAA_Template directory with the newest IDF/Arduino libraries, and propogate through a merge for a specific project.
+
 
 ### Adding libraries as components
 1. The primary way of adding external libraries, and sdks to the project is via git submodules
