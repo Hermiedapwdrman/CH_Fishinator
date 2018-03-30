@@ -54,7 +54,7 @@ int32_t rod_cast_start_pos = 3050;
 int32_t rod_cast_release_pos = 2300;
 int32_t rod_cast_retrieve_pos = 1000;
 const int32_t rod_hook_pos = 2000;
-const int32_t rod_neutral_pos = 1500;
+const int32_t rod_neutral_pos = 1700;
 const int32_t rod_MAX_pos = 3400;
 const int32_t rod_MIN_pos = 500;
 
