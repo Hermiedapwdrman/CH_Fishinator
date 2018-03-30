@@ -16,7 +16,7 @@
 //#define fishp_test "simple test \n\n\n\n"   //Must use macro if using logging software.
 #define FISH_MAJOR_REV 0
 #define FISH_MINOR_REV 2
-#define FISH_DATE_REV 180327
+#define FISH_DATE_REV 180330
 
 const static char* fishp_splash ="\n"
       "  ______ __  __ ______     ______ ____ _____  __  __ ____ _   __ ___   ______ ____   ____ \n"
@@ -40,7 +40,7 @@ const static char* fishp_help =
       " 'SPACE'- EMERGENCY STOP\n"
       " '?' - Print this help text\n"
       " 'y' - Print all three encoder current values\n"
-      " 't' or 'e' - SYNC: Set Quad encoders equal to absolute encoder. 'e' = CENTER SIP SOFT\n"
+      " 't' - SYNC: Set Quad encoders equal to absolute encoder. SIDE STRAW SIP\n"
       " '|' - Reset zero for absolute encoder: !!!CAREFUL!!!\n"
       " ':' - Reset cast start and release positions, follow prompts. AND save values to non-vol storage.\n"
       "\n"
@@ -57,7 +57,7 @@ const static char* fishp_help =
       " 'h' - Release +5 counts earlier.   ~10 counts per degree - RIGHT SIP \n"
       " 'm' - Release -5 counts later. ~10 counts per degree - LEFT SIP \n"
       " 'b' - Confirm CAST, after 'a' to start cast - CENTER PUFF SOFT \n"
-      " 'p' - Confirm CAST, after 'a' to start cast - Lip Switch \n"
+      " 'p' - Confirm CAST, after 'a' to start cast - LIP SWITCH OR SIDE PUFF\n"
       "\t NOTE: IF SEQUENCE IS CORRECT, IT WILL CAST IMMEDIATELY!\n"
       "\n"
       " NOTE: Cast moves in a decreasing direction, CAST_START~3000, RELEASE~2300, RETRIEVE~1000\n"
