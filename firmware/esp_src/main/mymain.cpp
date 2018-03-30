@@ -575,7 +575,7 @@ int fishStateMachine(int key, int state){
 
             case 8: //Cast start, cast if success, go to retrieve
                 if(abs(esp_quadenc_position - rod_cast_start_pos) <= 40) {
-                    printf("Hit 'b'or 'p', CENTER PUFF SOFT or LIP SWITCH to cast, any other to cancel\n");
+                    printf("Hit 'p', SIDE PUFF or LIP SWITCH to cast, any other to cancel\n");
 //                    do {
 //                        cc = getchar();
 //                    } while (cc == EOF);
