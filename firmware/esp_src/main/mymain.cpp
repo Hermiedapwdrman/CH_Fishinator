@@ -574,13 +574,18 @@ int fishStateMachine(int key, int state){
                 break;
 
             case 8: //Cast start, cast if success, go to retrieve
-                sync_encoders();
-                if(abs(rod_cast_start_pos - rod_cast_start_pos) <= 30) {
+                if(abs(esp_quadenc_position - rod_cast_start_pos) <= 40) {
                     printf("Hit 'b'or 'p', CENTER PUFF SOFT or LIP SWITCH to cast, any other to cancel\n");
 //                    do {
 //                        cc = getchar();
 //                    } while (cc == EOF);
                     cc = get_inputchar();
+
+                    //Encoder sync for sanity... or insanity?
+                    sync_encoders();
+                    ets_delay_us(5000);
+                    sync_encoders();
+                    ets_delay_us(5000);
 
                     if (cc == 'b' || cc == 'p') {
                         printf("\n\nCASTING!!!!!!!\n\n");
