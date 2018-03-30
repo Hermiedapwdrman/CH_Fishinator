@@ -41,6 +41,7 @@ Basic esp firmware project structure is as follows:
     * This configuration is saved at **sdkconfig**
     * BT/BLE/WIFI, Arduino control and other 'sub modules/peripherials' are activated via the GUI
     * Note: Upload ports, serial speeds and some other interface stuff here too.
+6) You might want to rename the template remote repo  ```git remote rename origin project-template```
 7) You then might want to commit your setup: ```git commit -a -m "initial project XXX commit```
     * You might want to tag this commit too: ```git tag project_xxx_init```
 ##### NOTE: Clion sometimes tries to assign a target to the build calls, this will throw a false error RE: soc/soc.h, remove them from the config to fix.
