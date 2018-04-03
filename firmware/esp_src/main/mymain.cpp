@@ -15,6 +15,7 @@
 #include <esp_system.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include <esp_err.h>
 
 //NVS flash api includes.
 #include <nvs_flash.h>
@@ -225,7 +226,8 @@ extern "C" void app_main()
     //Open NVS
     err = nvs_open("fishinator", NVS_READWRITE, &my_nvs_handle);
     if (err != ESP_OK) {
-        printf("Error (%s) opening NVS handle!\n", esp_err_to_name(err));
+//        printf("Error (%s) opening NVS handle!\n", esp_err_to_name(err));
+        printf("Error (%i) opening NVS handle!\n", static_cast<int32_t>(err));
     } else {
         printf("NVS Opened\n");
     }
