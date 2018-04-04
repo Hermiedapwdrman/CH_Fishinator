@@ -1,17 +1,37 @@
-//
-// Created by patrick on 3/27/18.
-//
+/***************************
+    fish_prompt.h
+    
+    Purpose: Contains all the strings and UI text blocks used in the terminal based controls. These comments should not
+    contain error information or programmatic feed back, that should be handled inside the functions themselves. This should
+    be project general information and User interface instructions only.
+
+
+        Created by Patrick Wagner on 4/4/18.
+
+---------------------------------------------
+MIT License:
+Copyright 2018 by Patrick Wagner
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is furnished
+to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+****************************/
 
 #ifndef CH_FISHINATOR_ESP_FISH_PROMPTS_H
 #define CH_FISHINATOR_ESP_FISH_PROMPTS_H
-
-/** This is a list of prompts I will be using to help Peter navigate the beta software
- *
- *  Generally the variable structure will be fishp_xxxxx for each of the strings.
- *
- *  Note: The ESP Loggind macros which do colored formated strings must be passed a macro string, not a const string.
- *  Otherwise use printf()
- */
 
 //#define fishp_test "simple test \n\n\n\n"   //Must use macro if using logging software.
 #define FISH_MAJOR_REV 0
@@ -19,16 +39,16 @@
 #define FISH_DATE_REV 180330
 
 const static char* fishp_splash ="\n"
-      "  ______ __  __ ______     ______ ____ _____  __  __ ____ _   __ ___   ______ ____   ____ \n"
-      " /_  __// / / // ____/    / ____//  _// ___/ / / / //  _// | / //   | /_  __// __ \\ / __ \\\n"
-      "  / /  / /_/ // __/      / /_    / /  \\__ \\ / /_/ / / / /  |/ // /| |  / /  / / / // /_/ /\n"
-      " / /  / __  // /___     / __/  _/ /  ___/ // __  /_/ / / /|  // ___ | / /  / /_/ // _, _/ \n"
-      "/_/  /_/ /_//_____/    /_/    /___/ /____//_/ /_//___//_/ |_//_/  |_|/_/   \\____//_/ |_|  \n"
-      "                                                                                          ";
+                                 "  ______ __  __ ______     ______ ____ _____  __  __ ____ _   __ ___   ______ ____   ____ \n"
+                                 " /_  __// / / // ____/    / ____//  _// ___/ / / / //  _// | / //   | /_  __// __ \\ / __ \\\n"
+                                 "  / /  / /_/ // __/      / /_    / /  \\__ \\ / /_/ / / / /  |/ // /| |  / /  / / / // /_/ /\n"
+                                 " / /  / __  // /___     / __/  _/ /  ___/ // __  /_/ / / /|  // ___ | / /  / /_/ // _, _/ \n"
+                                 "/_/  /_/ /_//_____/    /_/    /___/ /____//_/ /_//___//_/ |_//_/  |_|/_/   \\____//_/ |_|  \n"
+                                 "                                                                                          ";
 
 
 const static char* fishp_intro = "\nThis is the beta software for the CH_Fishinator system.\n"
-    "\t This software is to be controlled via serial terminal with the on board keyboard or with a quadstick.\n\n";
+                                 "\t This software is to be controlled via serial terminal with the on board keyboard or with a quadstick.\n\n";
 
 
 

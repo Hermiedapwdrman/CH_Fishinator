@@ -29,7 +29,7 @@
 #include "RoboClaw.h"
 #include "AMT20_ABSQUADENC_SPI.h"
 
-//General tag for this project
+//General tag and logging for this project. for this project
 #include "fish_prompts.h"
 static const char* TAG = "Fishinator";
 
