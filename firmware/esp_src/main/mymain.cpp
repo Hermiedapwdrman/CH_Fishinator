@@ -1,11 +1,35 @@
-/* Hello World Example
+/***************************
+    mymain.cpp
 
-   This example code is in the Public Domain (or CC0 licensed, at your option.)
+    Project: Craig hospital Fishinator
 
-   Unless required by applicable law or agreed to in writing, this
-   software is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
-   CONDITIONS OF ANY KIND, either express or implied.
-*/
+    Purpose: This project is the command and control firmware for the ESP32 based Fishinator; a computer controlled
+    fishing rod built at Craig Hospital.  The
+
+
+    Created by Patrick Wagner on 1/1/18.
+
+---------------------------------------------
+MIT License:
+Copyright 2018 by Patrick Wagner
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is furnished
+to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+****************************/
 //General Includes (IDF required)
 #include <stdio.h>
 #include <stdlib.h>
@@ -17,15 +41,15 @@
 #include "freertos/task.h"
 #include <esp_err.h>
 
-//NVS flash api includes.
+//NVS flash api IDF includes.
 #include <nvs_flash.h>
 #include <nvs.h>
 
-//Arduino specific includes.
+//Arduino - esp specific includes. For roboclaw UART and Encoder SPI use.
 #include <Arduino.h>
 #include <SPI.h>
 
-//Include third party libraries for specific program.
+//Include third party libraries for specific program.  Uses Arduino libraries.
 #include "RoboClaw.h"
 #include "AMT20_ABSQUADENC_SPI.h"
 
@@ -35,11 +59,18 @@ static const char* TAG = "Fishinator";
 
 
 
-/** Encoder Setup **/
-AMT20_ABSQUADENC_SPI Aencoder(&SPI);
+/** INIT AMT20_ABSQUADSPI Class **/
+#define PIN_MOSI_NUM  GPIO_NUM_13
+#define PIN_MISO_NUM  GPIO_NUM_12
+#define PIN_SCK_NUM  GPIO_NUM_14
+#define PIN_CS_NUM  GPIO_NUM_15
+#define PIN_ENCA_NUM GPIO_NUM_23
+#define PIN_ENCB_NUM GPIO_NUM_18
+
+AMT20_ABSQUADENC_SPI AMTencoder(&SPI, PIN_ENCA_NUM, PIN_ENCB_NUM, PIN_SCK_NUM, PIN_MISO_NUM, PIN_MOSI_NUM, PIN_CS_NUM);
 volatile DRAM_ATTR int32_t esp_quadenc_position = 0;  //Encoder global counter for esp quadrature counting
-//DRAM_ATTR int16_t AMT20_abs_position = -1;
-//DRAM_ATTR int32_t roboclaw_position = 0;
+
+//Other Encoder variables.
 int16_t AMT20_abs_position = -1;
 int32_t roboclaw_position = 0;
 volatile long cast_duration_timer = 0;
@@ -97,7 +128,7 @@ void goto_rod_position(rod_control_params_t* params, int16_t destination, boolea
 
 
 void sync_encoders(){
-    AMT20_abs_position = Aencoder.readEncoderPosition();
+    AMT20_abs_position = AMTencoder.readEncoderPosition();
 //    ets_delay_us(3000);
     esp_quadenc_position = AMT20_abs_position;
     roboclaw.SetEncM1(roboclaw_addr,AMT20_abs_position);
@@ -107,7 +138,7 @@ void print_encoder_info(){
     bool RC_valid_flag = false;
     uint8_t RC_status = 0;
 
-    AMT20_abs_position = Aencoder.readEncoderPosition();
+    AMT20_abs_position = AMTencoder.readEncoderPosition();
     ets_delay_us(100);
     roboclaw_position = roboclaw.ReadEncM1(roboclaw_addr, &RC_status, &RC_valid_flag);
     vTaskDelay(3/portTICK_PERIOD_MS);  //See
@@ -191,22 +222,17 @@ esp_err_t fish_nvs_read(){
  */
 extern "C" void app_main()
 {
-    esp_err_t erret;  //Standard return code variable.
+    esp_err_t err;  //Standard return code variable.
 
 
-// Set GPIO for encoder counting.
-    gpio_config(&EncA_GPIOconfig);
-    gpio_config(&EncB_GPIOconfig);
+    // Set GPIO for solenoid behavior.
     gpio_config(&Solenoid_GPIOconfig);
-
-    //Install gpio interrupt service
-    gpio_install_isr_service(ESP_INTR_FLAG_IRAM);
-    gpio_isr_handler_add(EncA_GPIO, &AMT20enc_isr_handler, NULL);
-    gpio_isr_handler_add(EncB_GPIO, &AMT20enc_isr_handler, NULL);
     gpio_set_level(solenoid_gpio_pin,1);
 
+    //Start AMT20 enocoder
+    AMTencoder.begin();
+
     /** Trying arduino spi library **/
-    SPI.begin(14,12,13,15);
     roboclaw.begin(460800);
     ets_delay_us(5000);
 //    roboclaw.begin(230400);
@@ -214,7 +240,7 @@ extern "C" void app_main()
     roboclaw.DutyM2(roboclaw_addr,0);
 
     // Initialize NVS
-    esp_err_t err = nvs_flash_init();
+    err = nvs_flash_init();
     if (err == ESP_ERR_NVS_NO_FREE_PAGES) {
         // NVS partition was truncated and needs to be erased
         // Retry nvs_flash_init
@@ -321,7 +347,7 @@ void control_comm_task(void* novars){
                 inchar = get_inputchar();
                 putchar(inchar);
                 if (inchar == 'y'){
-                    Aencoder.setEncoderZero();
+                    AMTencoder.setEncoderZero();
                     ets_delay_us(10000);
                     sync_encoders();
                     ets_delay_us(10000);
@@ -345,7 +371,7 @@ void control_comm_task(void* novars){
                 if(inchar == 'y'){
                     sync_encoders();
                     ets_delay_us(5000);
-                    rod_cast_start_pos = Aencoder.readEncoderPosition();
+                    rod_cast_start_pos = AMTencoder.readEncoderPosition();
                     printf("\nNew CAST START location = %i\n",rod_cast_start_pos);
                 }
                 else printf(" - SKIP!\n");
@@ -355,7 +381,7 @@ void control_comm_task(void* novars){
                 if(inchar == 'y'){
                     sync_encoders();
                     ets_delay_us(5000);
-                    rod_cast_retrieve_pos = Aencoder.readEncoderPosition();
+                    rod_cast_retrieve_pos = AMTencoder.readEncoderPosition();
                     printf("\nNew RETRIEVE location = %i\n",rod_cast_retrieve_pos);
                 }
                 else printf(" - SKIP!\n");
@@ -538,10 +564,10 @@ void IRAM_ATTR AMT20enc_isr_handler(void* args){
     static DRAM_ATTR int8_t lookup_table[] = {0,-1,1,0,1,0,0,-1,-1,0,0,1,0,1,-1,0};
     static DRAM_ATTR int enc_val = 0;
     enc_val = enc_val << 2;
-    enc_val = enc_val | ((gpio_get_level(EncA_GPIO) << 1) + gpio_get_level(EncB_GPIO));
+    enc_val = enc_val | ((gpio_get_level(PIN_ENCA_NUM) << 1) + gpio_get_level(PIN_ENCB_NUM));
     esp_quadenc_position = esp_quadenc_position + lookup_table[enc_val & 0b1111];
 
-    if(casting_semaphore){
+    if(casting_semaphore){  //A flag to watch for a specific event(location), action is to raise GPIO pin.
         if(esp_quadenc_position == rod_cast_release_pos){
             casting_semaphore = 0;
             gpio_set_level(solenoid_gpio_pin,1);
@@ -605,7 +631,7 @@ int fishStateMachine(int key, int state){
                 }
                 else{
                     nextstate = 8;
-                    printf("\nOUT OF SYNC: Start location should be: %i and is currently %i +/-30\n", rod_cast_start_pos,Aencoder.readEncoderPosition());
+                    printf("\nOUT OF SYNC: Start location should be: %i and is currently %i +/-30\n", rod_cast_start_pos,AMTencoder.readEncoderPosition());
                     printf("Re-sync with 't' and try casting again! \n");
                     skipprint = 1;
 
