@@ -341,145 +341,153 @@ int fishStateMachine(int key, int state){
     int skipprint = 0;
     int cc;
     static const char* subTAG = "FSM";
+
+
+    //State transistion printout strings
     char nextstate_text[25];
     char astate_text[25];
     char cstate_text[25];
-
+    static const char* scaststart = "CAST START";
+    static const char* sretrieve = "RETRIEVE";
+    static const char* sneutral = "NEUTRAL";
+    static const char* shook = "HOOK!!";
+    static const char* scast = "CAST!!!!";
 
 //    printf("FSkey: %c  FSstate: %i \n", key,state);
 
-    if(key == 'a'){
-//        Serial.print("Puff Advance");
-        switch(state){
-            case 2: //Neutral go to cast start
-                nextstate = 8;
-                strcpy(nextstate_text, "CAST START");
-                strcpy(astate_text, "CAST!!");
-                strcpy(cstate_text, "NEUTRAL");
-
-                goto_rod_position(&rod_slow_move_params,rod_cast_start_pos,1,1);
-                break;
-
-            case 8: //Cast start, cast if success, go to retrieve
-                if(abs(esp_quadenc_position - rod_cast_start_pos) <= 40) {
-                    printf("Hit 'p', SIDE PUFF or LIP SWITCH to cast, any other to cancel\n");
-//                    do {
-//                        cc = getchar();
-//                    } while (cc == EOF);
-                    cc = get_inputchar();
-
-                    //Encoder sync for sanity... or insanity?
-                    sync_encoders();
-                    ets_delay_us(5000);
-                    sync_encoders();
-                    ets_delay_us(5000);
-
-                    if (cc == 'b' || cc == 'p') {
-                        printf("\n\nCASTING!!!!!!!\n\n");
-                        nextstate = 4;
-                        strcpy(nextstate_text, "RETRIEVE");
-                        strcpy(astate_text, "NEUTRAL");
-                        strcpy(cstate_text, "HOOK");
-                        fishing_rod_cast_sequence();
-                        break;
-                    } else {
-                        nextstate = 8;
-                        printf("\nWrong confirmation, no cast! Stay in CAST START\n\n");
-                        skipprint = 1;
-                    }
-                }
-                else{
+    switch(state){
+        case 2: //NEUTRAL STATE
+            switch(key){
+                case 'a': //CENTER PUFF "ADVANCE STATE"
                     nextstate = 8;
-                    printf("\nOUT OF SYNC: Start location should be: %i and is currently %i +/-30\n", rod_cast_start_pos,AMTencoder.readEncoderPosition());
-                    printf("Re-sync with 't' and try casting again! \n");
+                    strcpy(nextstate_text, scaststart);
+                    strcpy(astate_text, scast);
+                    strcpy(cstate_text, sneutral);
+
+                    goto_rod_position(&rod_slow_move_params,rod_cast_start_pos,1,1);
+                    break;
+
+                case 'c': //CENTER SIP "REGRESS STATE"
+                    nextstate = 4;
+                    strcpy(nextstate_text, sretrieve);
+                    strcpy(astate_text, sneutral);
+                    strcpy(cstate_text, shook);
+
+                    goto_rod_position(&rod_slow_move_params,rod_cast_retrieve_pos,1,1);
+                    break;
+
+                default:
+                    break;
+            }
+            break;
+        case 4: //RETRIEVE STATE
+            switch(key){
+                case 'a': //CENTER PUFF "ADVANCE STATE"
+                    nextstate = 2;
+                    strcpy(nextstate_text, sneutral);
+                    strcpy(astate_text, scaststart);
+                    strcpy(cstate_text, sretrieve);
+
+                    goto_rod_position(&rod_slow_move_params,rod_neutral_pos,1,1);
+                    break;
+
+                case 'c': //CENTER SIP "REGRESS STATE"
+                    nextstate = 11;
+                    strcpy(nextstate_text, shook);
+                    strcpy(astate_text, sneutral);
+                    strcpy(cstate_text, "Nothing");
+
+                    goto_rod_position(&rod_CASTstart_move_params,rod_hook_pos,1,1);
+                    vTaskDelay(1500/portTICK_PERIOD_MS);
+                    break;
+
+
+                default:
+                    break;
+            }
+            break;
+        case 8: //CAST START STATE
+            switch(key){
+                case 'a': //CENTER PUFF "ADVANCE STATE"
+                    if(abs(esp_quadenc_position - rod_cast_start_pos) <= 40) {
+                        printf("Hit 'p', SIDE PUFF or LIP SWITCH to cast, any other to cancel\n");
+
+                        cc = get_inputchar();
+
+                        //Encoder sync for sanity... or insanity?
+                        sync_encoders();
+                        ets_delay_us(5000);
+                        sync_encoders();
+                        ets_delay_us(5000);
+
+                        if (cc == 'b' || cc == 'p') {
+                            printf("\n\nCASTING!!!!!!!\n\n");
+                            nextstate = 4;
+                            strcpy(nextstate_text, sretrieve);
+                            strcpy(astate_text, sneutral);
+                            strcpy(cstate_text, shook);
+                            fishing_rod_cast_sequence();
+                            break;
+                        } else {
+                            nextstate = 8;
+                            printf("\nWrong confirmation, no cast! Stay in CAST START\n\n");
+                            skipprint = 1;
+                        }
+                    }
+                    else{
+                        nextstate = 8;
+                        printf("\nOUT OF SYNC: Start location should be: %i and is currently %i +/-30\n", rod_cast_start_pos,AMTencoder.readEncoderPosition());
+                        printf("Re-sync with 't' and try casting again! \n");
+                        skipprint = 1;
+
+                    }
+                    break;
+
+                case 'c': //CENTER SIP "REGRESS STATE"
+                    nextstate = 2;
+                    strcpy(nextstate_text, sneutral);
+                    strcpy(astate_text, scaststart);
+                    strcpy(cstate_text, sretrieve);
+
+                    goto_rod_position(&rod_slow_move_params,rod_neutral_pos,1,1);
+                    break;
+
+                default:
+                    break;
+            }
+            break;
+        case 11: //HOOK STATE
+            switch(key){
+                case 'a': //CENTER PUFF "ADVANCE STATE"
+                    nextstate = 2;
+                    strcpy(nextstate_text, sneutral);
+                    strcpy(astate_text, scaststart);
+                    strcpy(cstate_text, sretrieve);
+
+                    goto_rod_position(&rod_slow_move_params,rod_neutral_pos,1,1);
+                    break;
+
+                case 'c': //CENTER SIP "REGRESS STATE"
+                    nextstate = 11;
+                    printf( "You must back out of hook with 'a'. Saftey first.\n");
                     skipprint = 1;
 
-                }
-//                strcpy(nextstate_text, "CAST START");
-//                strcpy(astate_text, "CAST!!!");
-//                strcpy(cstate_text, "NEUTRAL");
-                break;
-
-            case 4:  //Retrieve, go to neutral
-                nextstate = 2;
-                strcpy(nextstate_text, "NEUTRAL");
-                strcpy(astate_text, "CAST START");
-                strcpy(cstate_text, "RETRIEVE");
-
-                goto_rod_position(&rod_slow_move_params,rod_neutral_pos,1,1);
-                break;
-
-            case 11: //Hook position go to neutral
-                nextstate = 2;
-                strcpy(nextstate_text, "NEUTRAL");
-                strcpy(astate_text, "CAST START");
-                strcpy(cstate_text, "RETRIEVE");
-
-                goto_rod_position(&rod_slow_move_params,rod_neutral_pos,1,1);
-                break;
-            case 0:
-                printf("State is 0, you haven't synced encoders, press 't'\n");
-                skipprint = 1;
-                break;
-
-            default:
-                break;
-        }
-    }
-    else if (key == 'c'){
-        Serial.println("Sip Return");
-        switch(state){
-            case 2: //Neutral, go to retrieve
-                nextstate = 4;
-                strcpy(nextstate_text, "RETRIEVE");
-                strcpy(astate_text, "NEUTRAL");
-                strcpy(cstate_text, "HOOK!");
-
-                goto_rod_position(&rod_slow_move_params,rod_cast_retrieve_pos,1,1);
-                break;
-
-            case 8: //Cast start, go to neutral
-                nextstate = 2;
-                strcpy(nextstate_text, "NEUTRAL");
-                strcpy(astate_text, "CAST START");
-                strcpy(cstate_text, "RETRIEVE");
-
-                goto_rod_position(&rod_slow_move_params,rod_neutral_pos,1,1);
-                break;
-
-            case 4:  //Retrieve go to HOOK!
-                nextstate = 11;
-                strcpy(nextstate_text, "HOOK!");
-                strcpy(astate_text, "NEUTRAL");
-                strcpy(cstate_text, "RETRIEVE");
-
-                goto_rod_position(&rod_CASTstart_move_params,rod_hook_pos,1,1);
-                vTaskDelay(1500/portTICK_PERIOD_MS);
-                break;
-
-            case 11: //Hook position go to retrieve
-                nextstate = 11;
-                strcpy(nextstate_text, "HOOK!");
-                strcpy(astate_text, "NEUTRAL");
-                strcpy(cstate_text, "Nothing.");
-                printf( "You must back out of hook with 'a'. Saftey first.\n");
-                skipprint = 1;
-
 //                goto_rod_position(&rod_slow_move_params,rod_cast_retrieve_pos,1,1);
-                break;
-            case 0:
-                printf("State is 0, you haven't synced encoders, press 't'\n");
-                skipprint = 1;
-                break;
+                    break;
 
-            default:
-                break;
-        }
+                default:
+                    break;
+            }
+            break;
+        case 0:  // STATE MACHINE NOT INITD.
+            printf("State is 0, you haven't synced encoders, press 't'\n");
+            skipprint = 1;
+            break;
 
 
+        default:
+            break;
     }
-    else {printf("ERROR: Fish Stat Machine no case \n");} //Do nothing, however shouldnt reach here.
-
 //    ESP_LOGI(subTAG,"CurrentState: %i, NextState: %i",state, nextstate);
     if (!skipprint) {
         printf("  Going to state: ");
@@ -494,6 +502,166 @@ int fishStateMachine(int key, int state){
     return nextstate;
 
 }
+
+
+//int fishStateMachine(int key, int state){
+//    int nextstate = 0;
+//    int skipprint = 0;
+//    int cc;
+//    static const char* subTAG = "FSM";
+//    char nextstate_text[25];
+//    char astate_text[25];
+//    char cstate_text[25];
+//
+//
+////    printf("FSkey: %c  FSstate: %i \n", key,state);
+//
+//    if(key == 'a'){
+////        Serial.print("Puff Advance");
+//        switch(state){
+//            case 2: //Neutral go to cast start
+//                nextstate = 8;
+//                strcpy(nextstate_text, "CAST START");
+//                strcpy(astate_text, "CAST!!");
+//                strcpy(cstate_text, "NEUTRAL");
+//
+//                goto_rod_position(&rod_slow_move_params,rod_cast_start_pos,1,1);
+//                break;
+//
+//            case 8: //Cast start, cast if success, go to retrieve
+//                if(abs(esp_quadenc_position - rod_cast_start_pos) <= 40) {
+//                    printf("Hit 'p', SIDE PUFF or LIP SWITCH to cast, any other to cancel\n");
+////                    do {
+////                        cc = getchar();
+////                    } while (cc == EOF);
+//                    cc = get_inputchar();
+//
+//                    //Encoder sync for sanity... or insanity?
+//                    sync_encoders();
+//                    ets_delay_us(5000);
+//                    sync_encoders();
+//                    ets_delay_us(5000);
+//
+//                    if (cc == 'b' || cc == 'p') {
+//                        printf("\n\nCASTING!!!!!!!\n\n");
+//                        nextstate = 4;
+//                        strcpy(nextstate_text, "RETRIEVE");
+//                        strcpy(astate_text, "NEUTRAL");
+//                        strcpy(cstate_text, "HOOK");
+//                        fishing_rod_cast_sequence();
+//                        break;
+//                    } else {
+//                        nextstate = 8;
+//                        printf("\nWrong confirmation, no cast! Stay in CAST START\n\n");
+//                        skipprint = 1;
+//                    }
+//                }
+//                else{
+//                    nextstate = 8;
+//                    printf("\nOUT OF SYNC: Start location should be: %i and is currently %i +/-30\n", rod_cast_start_pos,AMTencoder.readEncoderPosition());
+//                    printf("Re-sync with 't' and try casting again! \n");
+//                    skipprint = 1;
+//
+//                }
+////                strcpy(nextstate_text, "CAST START");
+////                strcpy(astate_text, "CAST!!!");
+////                strcpy(cstate_text, "NEUTRAL");
+//                break;
+//
+//            case 4:  //Retrieve, go to neutral
+//                nextstate = 2;
+//                strcpy(nextstate_text, "NEUTRAL");
+//                strcpy(astate_text, "CAST START");
+//                strcpy(cstate_text, "RETRIEVE");
+//
+//                goto_rod_position(&rod_slow_move_params,rod_neutral_pos,1,1);
+//                break;
+//
+//            case 11: //Hook position go to neutral
+//                nextstate = 2;
+//                strcpy(nextstate_text, "NEUTRAL");
+//                strcpy(astate_text, "CAST START");
+//                strcpy(cstate_text, "RETRIEVE");
+//
+//                goto_rod_position(&rod_slow_move_params,rod_neutral_pos,1,1);
+//                break;
+//            case 0:
+//                printf("State is 0, you haven't synced encoders, press 't'\n");
+//                skipprint = 1;
+//                break;
+//
+//            default:
+//                break;
+//        }
+//    }
+//    else if (key == 'c'){
+//        Serial.println("Sip Return");
+//        switch(state){
+//            case 2: //Neutral, go to retrieve
+//                nextstate = 4;
+//                strcpy(nextstate_text, "RETRIEVE");
+//                strcpy(astate_text, "NEUTRAL");
+//                strcpy(cstate_text, "HOOK!");
+//
+//                goto_rod_position(&rod_slow_move_params,rod_cast_retrieve_pos,1,1);
+//                break;
+//
+//            case 8: //Cast start, go to neutral
+//                nextstate = 2;
+//                strcpy(nextstate_text, "NEUTRAL");
+//                strcpy(astate_text, "CAST START");
+//                strcpy(cstate_text, "RETRIEVE");
+//
+//                goto_rod_position(&rod_slow_move_params,rod_neutral_pos,1,1);
+//                break;
+//
+//            case 4:  //Retrieve go to HOOK!
+//                nextstate = 11;
+//                strcpy(nextstate_text, "HOOK!");
+//                strcpy(astate_text, "NEUTRAL");
+//                strcpy(cstate_text, "RETRIEVE");
+//
+//                goto_rod_position(&rod_CASTstart_move_params,rod_hook_pos,1,1);
+//                vTaskDelay(1500/portTICK_PERIOD_MS);
+//                break;
+//
+//            case 11: //Hook position go to retrieve
+//                nextstate = 11;
+//                strcpy(nextstate_text, "HOOK!");
+//                strcpy(astate_text, "NEUTRAL");
+//                strcpy(cstate_text, "Nothing.");
+//                printf( "You must back out of hook with 'a'. Saftey first.\n");
+//                skipprint = 1;
+//
+////                goto_rod_position(&rod_slow_move_params,rod_cast_retrieve_pos,1,1);
+//                break;
+//            case 0:
+//                printf("State is 0, you haven't synced encoders, press 't'\n");
+//                skipprint = 1;
+//                break;
+//
+//            default:
+//                break;
+//        }
+//
+//
+//    }
+//    else {printf("ERROR: Fish Stat Machine no case \n");} //Do nothing, however shouldnt reach here.
+//
+////    ESP_LOGI(subTAG,"CurrentState: %i, NextState: %i",state, nextstate);
+//    if (!skipprint) {
+//        printf("  Going to state: ");
+//        printf(nextstate_text);
+//        printf(", 'a' will then take you to: ");
+//        printf(astate_text);
+//        printf(", 'c' will take you to: ");
+//        printf(cstate_text);
+//        printf(". \n\n");
+//    }
+//
+//    return nextstate;
+//
+//}
 
 
 
