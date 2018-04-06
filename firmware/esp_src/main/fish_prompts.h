@@ -36,7 +36,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SO
 //#define fishp_test "simple test \n\n\n\n"   //Must use macro if using logging software.
 #define FISH_MAJOR_REV 0
 #define FISH_MINOR_REV 2
-#define FISH_DATE_REV 180330
+#define FISH_DATE_REV 180406
 
 const static char* fishp_splash ="\n"
                                  "  ______ __  __ ______     ______ ____ _____  __  __ ____ _   __ ___   ______ ____   ____ \n"
