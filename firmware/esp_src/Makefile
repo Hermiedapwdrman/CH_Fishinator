@@ -18,7 +18,7 @@ PROJECT_NAME := CH_Fishinator_ESP
 
 
 #For adding headers with absolute paths, you must use the following commands with absolute paths.
-#COMPONENT_EXTRA_INCLUDEDIRS := /CH/development/lib_global_ext/example_library/include	 # Works
+COMPONENT_EXTRA_INCLUDEDIRS := /CH/development/lib_global_ext/example_library/include	 # Works
 
 
 include ./components/esp-idf/make/project.mk
