@@ -1,0 +1,18 @@
+            case 't':  //Re-calibrate encoders
+            case 'r':  //Print encoder info
+            case '=': //Fire solenoid for 1 second
+            case 'u': //Reel for 30ms?
+            case 'q': //Advanced cast release 5 counts
+            case 'w': //Retard cast release 5 counts
+            case 'n': //Advanced accell 1000 qpps
+            case 'm': //Deccel 1000 qpps
+
+            case 'a': // Go to cast start
+            case 's': // Go to cast release location
+            case 'd': // Go to cast finish location
+            case 'p': // Cast, with second check of 'z'
+	
+	
+NOTE: 	1) To cast, make sure the rod is at start: Press 'a'
+		2) Check encoder number is good by pressing 't'
+		3) Execute cast sequence by pressing 'p' then 'z'.

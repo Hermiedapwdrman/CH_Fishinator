@@ -1,0 +1,67 @@
+New Controls:
+	case 't':  //Re-sycronize encoders to abs value.
+	case 'y':  //Print each encoder value
+	case '|':  //Set encoder zero, and sync encoders: NOTE Should be rod straight down.
+	case '=': //Fire solenoid for 30 ms, hold for longer
+	case '?': //Print help commands
+
+
+
+	//Quadstick Mappings
+	/// Center SNP keymap
+	case 'a':  //Center Puff Hard ->  Advance one state
+	case 'b':  //Center Puff Soft ->
+	case 'c':  //Center Sip Hard  ->  Retard one state
+	case 'e':  //Center Sip Soft		
+	/// Right SNP keymap
+	case 'f':  //Right Puff Hard  -> Cast speed increase
+	case 'g':  //Right Puff Soft
+	case 'h':  //Right Sip Hard   -> Release Advanced 
+	case 'i':  //Right Sip Soft
+			/// Left SNP keymap
+	case 'j':  //Left Puff Hard  -> Cast speed decrease
+	case 'k':  //Left Puff Soft
+	case 'm':  //Left Sip Hard  -> Release position retard.
+	case 'n':  //Left Sip Soft
+	/// Joystick keymap
+	case 'u':  //Joystick up:  Reel for 30ms
+	case 'd':  //Joystick down: Reel for 30ms at half speed
+	case 'l':  //Joystick left: Move rod forward
+	case 'r':  //Joystick right: Move rod backwards.
+	case 'p':  //Lip switch:  Positive test for cast.
+
+
+
+OLD Controls:
+	case 't':  //Find encoder Index
+	case 'y':  //Find encoder Index
+	case 'x': + 50/1024 counts
+	case 'z': - 50/1024 counts
+	case 'w': print all
+	case '=': test solenoid
+	
+	//Quadstick Mappings
+	/// Center SNP keymap
+	case 'a':  //Center Puff Hard ->  Advance one state
+	case 'b':  //Center Puff Soft ->
+	case 'c':  //Center Sip Hard  ->  Retard one state
+	case 'e':  //Center Sip Soft		
+	/// Right SNP keymap
+	case 'f':  //Right Puff Hard  -> Cast speed increase
+	case 'g':  //Right Puff Soft
+	case 'h':  //Right Sip Hard   -> Release Advanced 
+	case 'i':  //Right Sip Soft
+			/// Left SNP keymap
+	case 'j':  //Left Puff Hard  -> Cast speed decrease
+	case 'k':  //Left Puff Soft
+	case 'm':  //Left Sip Hard  -> Release position retard.
+	case 'n':  //Left Sip Soft
+	/// Joystick keymap
+	case 'u':  //Joystick up:  Reel for 30ms
+	case 'd':  //Joystick down: Reel for 30ms(go slower?
+	case 'l':  //Joystick left: Move rod forward
+	case 'r':  //Joystick right: Move rod backwards.
+	case 'p':  //Lip switch:  Positive test for cast.
+
+
+

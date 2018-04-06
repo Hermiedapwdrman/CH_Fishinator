@@ -1,6 +1,6 @@
 #### Resources for Programming ESP32 using IDF and or Arduino
 
-1. Remeber that 'most' arduino libraries can be used if using the arduino-esp libraries and calling `initArduino()`
+1. Remember that 'most' arduino libraries can be used if using the arduino-esp libraries and calling `initArduino()`
 
 2. ESP Technical manual in the datasheets will describe the various core systems, peripherials, the interrupt system, as well asl all the config register.
 However it does not describe any of the build software, ESP-IDF SDK, or the freeRTOS libraries.
