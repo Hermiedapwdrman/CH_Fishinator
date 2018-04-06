@@ -1,10 +1,11 @@
 /***************************
-    fish_CnC.cpp
+    @file fish_CnC.cpp
     
-    Purpose: 
+    @brief Command and control for the Fishinator. This includes
+     initialization and communication of peripherals, ISRs, and state machines.
 
-
-        Created by Patrick Wagner on 4/5/18.
+     @author Patrick Wagner
+     @date 4/5/18
 
 ---------------------------------------------
 MIT License:
@@ -119,29 +120,7 @@ rod_control_params_t rod_CASTstart_move_params ={10000, 40, 80000, 1000, 20, rod
 nvs_handle my_nvs_handle;
 
 /************* Functions *************************************/
-void sync_encoders(){
-    AMT20_abs_position = AMTencoder.readEncoderPosition();
-//    ets_delay_us(3000);
-    esp_quadenc_position = AMT20_abs_position;
-    roboclaw.SetEncM1(roboclaw_addr,AMT20_abs_position);
-}
 
-
-void print_encoder_info(){
-    bool RC_valid_flag = false;
-    uint8_t RC_status = 0;
-
-    AMT20_abs_position = AMTencoder.readEncoderPosition();
-    ets_delay_us(100);
-    roboclaw_position = roboclaw.ReadEncM1(roboclaw_addr, &RC_status, &RC_valid_flag);
-    vTaskDelay(3/portTICK_PERIOD_MS);
-
-    printf("Abs. Pos: %i \t\t", AMT20_abs_position);
-    printf("Quad Pos: %i \t\t", esp_quadenc_position);
-    printf("Roboclaw Quad: %i \t\t", roboclaw_position);
-    printf("\n");
-
-}
 
 void fishing_serialcomm_control_task(void *novars){
     static int32_t state_debounce_counter = 0;  // Debounce counter for state machine transisition, to keep from advancing too quickly.
@@ -357,53 +336,6 @@ void fishing_serialcomm_control_task(void *novars){
 
 }
 
-
-
-void goto_rod_position(rod_control_params_t* params, int16_t destination, boolean override_current_move, boolean update_params){
-    bool RC_valid_flag = false;
-    uint8_t RC_status = 0;
-
-    if(update_params) roboclaw.SetM1PositionPID(roboclaw_addr,params->pid_P,params->pid_I,params->pid_D,
-                                                params->pid_maxI,params->deadzone, params->min_position,params->max_position);
-
-    vTaskDelay(3/portTICK_PERIOD_MS);
-//    ets_delay_us(20);
-    roboclaw.SpeedAccelDeccelPositionM1(roboclaw_addr,params->accel,params->speed, params->decel, destination, override_current_move);
-}
-
-void fishing_rod_cast_sequence(){
-    //Some sort of enable flag and/or semaphore take?
-    bool RC_valid_flag = false;
-    uint8_t RC_status = 0;
-    int32_t M1speed = 0;
-
-    sync_encoders();  //Sync encoders
-//    vTaskDelay(100/portTICK_PERIOD_MS);  //Yield for encoder sync to finish
-    gpio_set_level(solenoid_gpio_pin,0); //Low Active.
-    vTaskDelay(200/portTICK_PERIOD_MS);  //Yield for encoder sync to finish and solenoid to engage
-
-    goto_rod_position(&rod_CASTstart_move_params,rod_neutral_pos,1,1);  //Start Casting
-    cast_duration_timer = micros();
-    vTaskDelay(100/portTICK_PERIOD_MS); //Yield for a while, while the motor gets going.
-
-    casting_semaphore = true;  //Set semaphore flag which will trigger a comparison in Esp encoder ISR to release solenoid
-    while(casting_semaphore) {
-//        putchar('.');
-//        vTaskDelay(1 / portTICK_PERIOD_MS);  //Block(yield cpu) while waiting for solenoid release.
-        ets_delay_us(50);
-    }
-    gpio_set_level(solenoid_gpio_pin,1); //Release solenoid
-    M1speed = roboclaw.ReadSpeedM1(roboclaw_addr,&RC_status,&RC_valid_flag);
-    vTaskDelay(1200/portTICK_PERIOD_MS);
-//    goto_rod_position(&rod_CASTfinish_move_params,rod_cast_retrieve_pos,1,1);  //Start Casting
-    goto_rod_position(&rod_slow_move_params,rod_cast_retrieve_pos,0,1);  //Start Casting
-    vTaskDelay(2000/portTICK_PERIOD_MS);
-//    fish_nvs_write();  //Store casting information to nv flash, that way a well tuned cast is preserved.
-//    printf("Speed(cps): %i\n",M1speed);  //Test release speed printout
-//    printf("Dur(us): %i\n",static_cast<uint32_t>(cast_duration_timer));
-}
-
-
 int fishStateMachine(int key, int state){
     int nextstate = 0;
     int skipprint = 0;
@@ -560,6 +492,76 @@ int fishStateMachine(int key, int state){
     }
 
     return nextstate;
+
+}
+
+
+
+void fishing_rod_cast_sequence(){
+    //Some sort of enable flag and/or semaphore take?
+    bool RC_valid_flag = false;
+    uint8_t RC_status = 0;
+    int32_t M1speed = 0;
+
+    sync_encoders();  //Sync encoders
+//    vTaskDelay(100/portTICK_PERIOD_MS);  //Yield for encoder sync to finish
+    gpio_set_level(solenoid_gpio_pin,0); //Low Active.
+    vTaskDelay(200/portTICK_PERIOD_MS);  //Yield for encoder sync to finish and solenoid to engage
+
+    goto_rod_position(&rod_CASTstart_move_params,rod_neutral_pos,1,1);  //Start Casting
+    cast_duration_timer = micros();
+    vTaskDelay(100/portTICK_PERIOD_MS); //Yield for a while, while the motor gets going.
+
+    casting_semaphore = true;  //Set semaphore flag which will trigger a comparison in Esp encoder ISR to release solenoid
+    while(casting_semaphore) {
+//        putchar('.');
+//        vTaskDelay(1 / portTICK_PERIOD_MS);  //Block(yield cpu) while waiting for solenoid release.
+        ets_delay_us(50);
+    }
+    gpio_set_level(solenoid_gpio_pin,1); //Release solenoid
+    M1speed = roboclaw.ReadSpeedM1(roboclaw_addr,&RC_status,&RC_valid_flag);
+    vTaskDelay(1200/portTICK_PERIOD_MS);
+//    goto_rod_position(&rod_CASTfinish_move_params,rod_cast_retrieve_pos,1,1);  //Start Casting
+    goto_rod_position(&rod_slow_move_params,rod_cast_retrieve_pos,0,1);  //Start Casting
+    vTaskDelay(2000/portTICK_PERIOD_MS);
+//    fish_nvs_write();  //Store casting information to nv flash, that way a well tuned cast is preserved.
+//    printf("Speed(cps): %i\n",M1speed);  //Test release speed printout
+//    printf("Dur(us): %i\n",static_cast<uint32_t>(cast_duration_timer));
+}
+
+void goto_rod_position(rod_control_params_t* params, int16_t destination, boolean override_current_move, boolean update_params){
+    bool RC_valid_flag = false;
+    uint8_t RC_status = 0;
+
+    if(update_params) roboclaw.SetM1PositionPID(roboclaw_addr,params->pid_P,params->pid_I,params->pid_D,
+                                                params->pid_maxI,params->deadzone, params->min_position,params->max_position);
+
+    vTaskDelay(3/portTICK_PERIOD_MS);
+//    ets_delay_us(20);
+    roboclaw.SpeedAccelDeccelPositionM1(roboclaw_addr,params->accel,params->speed, params->decel, destination, override_current_move);
+}
+
+void sync_encoders(){
+    AMT20_abs_position = AMTencoder.readEncoderPosition();
+//    ets_delay_us(3000);
+    esp_quadenc_position = AMT20_abs_position;
+    roboclaw.SetEncM1(roboclaw_addr,AMT20_abs_position);
+}
+
+
+void print_encoder_info(){
+    bool RC_valid_flag = false;
+    uint8_t RC_status = 0;
+
+    AMT20_abs_position = AMTencoder.readEncoderPosition();
+    ets_delay_us(100);
+    roboclaw_position = roboclaw.ReadEncM1(roboclaw_addr, &RC_status, &RC_valid_flag);
+    vTaskDelay(3/portTICK_PERIOD_MS);
+
+    printf("Abs. Pos: %i \t\t", AMT20_abs_position);
+    printf("Quad Pos: %i \t\t", esp_quadenc_position);
+    printf("Roboclaw Quad: %i \t\t", roboclaw_position);
+    printf("\n");
 
 }
 

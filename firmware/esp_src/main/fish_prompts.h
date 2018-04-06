@@ -1,12 +1,12 @@
 /***************************
-    fish_prompt.h
+    @file fish_prompt.h
     
-    Purpose: Contains all the strings and UI text blocks used in the terminal based controls. These comments should not
+    @brief Contains all the strings and UI text blocks used in the terminal based controls. These comments should not
     contain error information or programmatic feed back, that should be handled inside the functions themselves. This should
     be project general information and User interface instructions only.
 
-
-        Created by Patrick Wagner on 4/4/18.
+    @author Patrick Wagner
+    @date 4/5/18
 
 ---------------------------------------------
 MIT License:

@@ -1,13 +1,14 @@
 /***************************
-    mymain.cpp
+    @file mymain.cpp
 
-    Project: Craig hospital Fishinator
+    @brief
+    Project: "The Fishinator"
 
     Purpose: This project is the command and control firmware for the ESP32 based Fishinator; a computer controlled
     fishing rod built at Craig Hospital.  The
 
-
-    Created by Patrick Wagner on 1/1/18.
+     @author Patrick Wagner
+     @date 4/5/18
 
 ---------------------------------------------
 MIT License:
